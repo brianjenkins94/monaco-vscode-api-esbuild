@@ -1,0 +1,27 @@
+{
+  "name": "poc",
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "author": "Brian Jenkins",
+  "license": "MIT",
+  "scripts": {
+    "prebuild": "cd monaco && npm install && rm -rf dist",
+    "build": "cd monaco && npm start #tsup monaco/src/main.ts --format esm --treeshake --outDir monaco/dist/",
+    "serve": "npx serve monaco"
+  },
+  "devDependencies": {
+    "@tsconfig/node-lts": "latest",
+    "@types/node": "latest",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "eslint": "latest",
+    "ts-node": "latest",
+    "typescript": "latest"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "sideEffects": false
+}
