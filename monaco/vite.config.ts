@@ -6,7 +6,17 @@ const cdnDomain = 'http://127.0.0.2:5173'
 
 export default defineConfig({
   build: {
-    target: 'esnext'
+    assetsInlineLimit: 0,
+    target: 'esnext',
+    rollupOptions: {
+      output: {
+        entryFileNames: `assets/[name].js`,
+        chunkFileNames: `assets/[name].js`,
+        assetFileNames: `assets/[name].[ext]`,
+        manualChunks: undefined
+      }
+    },
+    minify: false
   },
   plugins: [
     {

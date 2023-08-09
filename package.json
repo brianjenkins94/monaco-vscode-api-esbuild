@@ -8,7 +8,8 @@
   "scripts": {
     "prebuild": "cd monaco && npm install && rm -rf dist",
     "build": "cd monaco && npm start #tsup monaco/src/main.ts --format esm --treeshake --outDir monaco/dist/",
-    "serve": "npx serve monaco"
+    "interceptor": "node --experimental-specifier-resolution=node --loader=ts-node/esm interceptor",
+    "tsup": "tsup monaco/src/main.ts --format esm --treeshake --outDir dist/"
   },
   "devDependencies": {
     "@tsconfig/node-lts": "latest",
@@ -17,6 +18,7 @@
     "@typescript-eslint/parser": "latest",
     "eslint": "latest",
     "ts-node": "latest",
+    "tsup": "^7.2.0",
     "typescript": "latest"
   },
   "engines": {

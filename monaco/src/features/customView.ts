@@ -1,7 +1,7 @@
 import { IDialogService } from 'vscode/services'
 import { registerCustomView, registerEditorPane, ViewContainerLocation } from 'vscode/service-override/views'
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js'
-import iconUrl from '../Visual_Studio_Code_1.35_icon.svg?url'
+//import iconUrl from '../Visual_Studio_Code_1.35_icon.svg?url'
 
 registerCustomView({
   id: 'custom-view',
@@ -20,7 +20,7 @@ registerCustomView({
     }
   },
   location: ViewContainerLocation.Panel,
-  icon: new URL(iconUrl, window.location.href).toString(),
+  //icon: new URL(iconUrl, window.location.href).toString(),
   actions: [{
     id: 'custom-action',
     title: 'Custom action',

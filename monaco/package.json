@@ -12,9 +12,9 @@
     "postinstall": "node node_modules/vscode/monaco-treemending.js",
     "start": "NODE_OPTIONS=--experimental-import-meta-resolve vite --config vite.config.ts",
     "debug": "vite --config vite.config.ts --debug --force",
-    "build": "vite --config vite.config.ts build"
+    "build": "vite --config vite.config.ts build && rm dist/assets/*.mp3 dist/assets/*.map",
+    "preview": "vite preview"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/vscode": "latest",
     "ansi-colors": "latest",
@@ -22,15 +22,15 @@
     "ts-node": "latest",
     "typescript": "latest",
     "vite": "latest",
-    "vscode-oniguruma": "latest",
     "vscode": "npm:@codingame/monaco-vscode-api",
+    "vscode-oniguruma": "latest",
+    "xterm": "latest",
     "xterm-addon-canvas": "latest",
     "xterm-addon-image": "latest",
     "xterm-addon-search": "latest",
     "xterm-addon-serialize": "latest",
     "xterm-addon-unicode11": "latest",
-    "xterm-addon-webgl": "latest",
-    "xterm": "latest"
+    "xterm-addon-webgl": "latest"
   },
   "enabledApiProposals": [
     "fileSearchProvider",
