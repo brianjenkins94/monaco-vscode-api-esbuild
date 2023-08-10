@@ -5,6 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>monaco-vscode-api demo</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
+		<script>
+			window.require = { paths: { vs: 'assets' } };
+
+      /*
+      const workerLoaders = {
+        editorWorkerService: () => new (toCrossOriginWorker(EditorWorker))(),
+        textMateWorker: () => new (toCrossOriginWorker(TextMateWorker))(),
+        outputLinkComputer: () => new (toCrossOriginWorker(OutputLinkComputerWorker))(),
+        languageDetectionWorkerService: () => new (toCrossOriginWorker(LanguageDetectionWorker))()
+      }
+
+      window.MonacoEnvironment = {
+        getWorker: function(moduleId, label) {
+          const workerFactory = workerLoaders?.[label]
+          if (workerFactory != null) {
+            return workerFactory()
+          }
+          throw new Error(`Unimplemented worker ${label} (${moduleId})`)
+        }
+      };
+      */
+		</script>
+		<!-- <script src="https://cdn.jsdelivr.net/npm/monaco-editor/min/vs/loader.js"></script> -->
+		<!-- <script src="https://cdn.jsdelivr.net/npm/monaco-editor/min/vs/editor/editor.main.nls.js"></script> -->
+		<!-- <script src="https://cdn.jsdelivr.net/npm/monaco-editor/min/vs/editor/editor.main.js"></script> -->
+    <script type="module" src="src/setup.ts"></script>
+    <script type="module" src="src/main.ts"></script>
   </head>
   <body>
     <div id="app">
@@ -27,13 +54,12 @@
 
       <div id="statusBar"></div>
 
-      <!-- <h1>Settings</h1>
+      <h1>Settings</h1>
       <button id="settingsui">Open settings UI</button>
       <div id="settings-editor" class="editor"></div>
       <h1>Keybindings</h1>
       <button id="keybindingsui">Open keybindings UI</button>
-      <div id="keybindings-editor" class="editor"></div> -->
+      <div id="keybindings-editor" class="editor"></div>
     </div>
-    <script type="module" src="src/main.ts"></script>
   </body>
 </html>

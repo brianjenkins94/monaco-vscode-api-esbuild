@@ -8,7 +8,6 @@
   "scripts": {
     "prebuild": "cd monaco && npm install && rm -rf dist",
     "build": "cd monaco && npm start #tsup monaco/src/main.ts --format esm --treeshake --outDir monaco/dist/",
-    "interceptor": "node --experimental-specifier-resolution=node --loader=ts-node/esm interceptor",
     "tsup": "tsup monaco/src/main.ts --format esm --treeshake --outDir dist/"
   },
   "devDependencies": {

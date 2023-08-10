@@ -16,6 +16,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@stadtlandnetz/rollup-plugin-postprocess": "^1.1.0",
     "@types/vscode": "latest",
     "ansi-colors": "latest",
     "monaco-editor": "latest",
