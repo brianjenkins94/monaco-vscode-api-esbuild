@@ -1,40 +1,40 @@
-import './style.css'
+import "./style.css";
 
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js'
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api.js";
 //import './setup'
-import { createConfiguredEditor, createModelReference } from 'vscode/monaco'
-import { registerFileSystemOverlay, HTMLFileSystemProvider } from 'vscode/service-override/files'
-import * as vscode from 'vscode'
-import { ILogService, StandaloneServices, IPreferencesService, IEditorService, IDialogService } from 'vscode/services'
-import { ConfirmResult } from 'vscode/service-override/views'
-import { CustomEditorInput } from './features/customView'
+import { createConfiguredEditor, createModelReference } from "vscode/monaco";
+import { HTMLFileSystemProvider, registerFileSystemOverlay } from "vscode/service-override/files";
+import * as vscode from "vscode";
+import { IDialogService, IEditorService, ILogService, IPreferencesService, StandaloneServices } from "vscode/services";
+import { ConfirmResult } from "vscode/service-override/views";
+import { CustomEditorInput } from "./features/customView";
 //import './features/debugger'
-import './features/search'
-import { anotherFakeOutputChannel } from './features/output'
-import './features/filesystem'
-import './features/intellisense'
-import './features/notifications'
-import './features/terminal'
+import "./features/search";
+import { anotherFakeOutputChannel } from "./features/output";
+import "./features/filesystem";
+import "./features/intellisense";
+import "./features/notifications";
+import "./features/terminal";
 
-import 'vscode/default-extensions/css'
-import 'vscode/default-extensions/diff'
-import 'vscode/default-extensions/html'
-import 'vscode/default-extensions/javascript'
-import 'vscode/default-extensions/json'
-import 'vscode/default-extensions/markdown-basics'
-import 'vscode/default-extensions/scss'
-import 'vscode/default-extensions/typescript-basics'
+import "vscode/default-extensions/css";
+import "vscode/default-extensions/diff";
+import "vscode/default-extensions/html";
+import "vscode/default-extensions/javascript";
+import "vscode/default-extensions/json";
+import "vscode/default-extensions/markdown-basics";
+import "vscode/default-extensions/scss";
+import "vscode/default-extensions/typescript-basics";
 
-import 'vscode/default-extensions/theme-defaults'
-import 'vscode/default-extensions/theme-seti'
-import 'vscode/default-extensions/references-view'
-import 'vscode/default-extensions/search-result'
-import 'vscode/default-extensions/configuration-editing'
+import "vscode/default-extensions/theme-defaults";
+import "vscode/default-extensions/theme-seti";
+import "vscode/default-extensions/references-view";
+import "vscode/default-extensions/search-result";
+import "vscode/default-extensions/configuration-editing";
 //import 'vscode/default-extensions/markdown-math'
-import 'vscode/default-extensions/npm'
-import 'vscode/default-extensions/media-preview'
+import "vscode/default-extensions/npm";
+import "vscode/default-extensions/media-preview";
 
-const modelRef = await createModelReference(monaco.Uri.file('/tmp/test.js'), `// import anotherfile
+const modelRef = await createModelReference(monaco.Uri.file("/tmp/test.js"), `// import anotherfile
 let variable = 1
 function inc () {
   variable++
@@ -43,33 +43,33 @@ function inc () {
 while (variable < 5000) {
   inc()
   console.log('Hello world', variable);
-}`)
+}`);
 
 const [mainDocument] = await Promise.all([
-  vscode.workspace.openTextDocument(modelRef.object.textEditorModel!.uri),
-  vscode.workspace.openTextDocument(monaco.Uri.file('/tmp/test_readonly.js')) // open the file so vscode sees it's locked
-])
+	vscode.workspace.openTextDocument(modelRef.object.textEditorModel.uri),
+	vscode.workspace.openTextDocument(monaco.Uri.file("/tmp/test_readonly.js")) // open the file so vscode sees it's locked
+]);
 await vscode.window.showTextDocument(mainDocument, {
-  preview: false
-})
+	"preview": false
+});
 
-anotherFakeOutputChannel.replace(mainDocument.getText())
+anotherFakeOutputChannel.replace(mainDocument.getText());
 vscode.workspace.onDidChangeTextDocument((e) => {
-  if (e.document === mainDocument) {
-    anotherFakeOutputChannel.replace(e.document.getText())
-  }
-})
+	if (e.document === mainDocument) {
+		anotherFakeOutputChannel.replace(e.document.getText());
+	}
+});
 
-const diagnostics = vscode.languages.createDiagnosticCollection('demo')
-diagnostics.set(modelRef.object.textEditorModel!.uri, [{
-  range: new vscode.Range(2, 9, 2, 12),
-  severity: vscode.DiagnosticSeverity.Error,
-  message: 'This is not a real error, just a demo, don\'t worry',
-  source: 'Demo',
-  code: 42
-}])
+const diagnostics = vscode.languages.createDiagnosticCollection("demo");
+diagnostics.set(modelRef.object.textEditorModel.uri, [{
+	"range": new vscode.Range(2, 9, 2, 12),
+	"severity": vscode.DiagnosticSeverity.Error,
+	"message": "This is not a real error, just a demo, don't worry",
+	"source": "Demo",
+	"code": 42
+}]);
 
-const settingsModelReference = await createModelReference(monaco.Uri.from({ scheme: 'user', path: '/settings.json' }), `{
+const settingsModelReference = await createModelReference(monaco.Uri.from({ "scheme": "user", "path": "/settings.json" }), `{
   "workbench.colorTheme": "Default Dark+",
   "workbench.iconTheme": "vs-seti",
   "editor.autoClosingBrackets": "languageDefined",
@@ -90,79 +90,79 @@ const settingsModelReference = await createModelReference(monaco.Uri.from({ sche
   "editor.experimental.asyncTokenization": true,
   "terminal.integrated.tabs.title": "\${sequence}",
   "typescript.tsserver.log": "normal"
-}`)
-createConfiguredEditor(document.getElementById('settings-editor')!, {
-  model: settingsModelReference.object.textEditorModel,
-  automaticLayout: true
-})
+}`);
+createConfiguredEditor(document.getElementById("settings-editor")!, {
+	"model": settingsModelReference.object.textEditorModel,
+	"automaticLayout": true
+});
 
-const keybindingsModelReference = await createModelReference(monaco.Uri.from({ scheme: 'user', path: '/keybindings.json' }), `[
+const keybindingsModelReference = await createModelReference(monaco.Uri.from({ "scheme": "user", "path": "/keybindings.json" }), `[
   {
     "key": "ctrl+d",
     "command": "editor.action.deleteLines",
     "when": "editorTextFocus"
   }
-]`)
-createConfiguredEditor(document.getElementById('keybindings-editor')!, {
-  model: keybindingsModelReference.object.textEditorModel,
-  automaticLayout: true
-})
+]`);
+createConfiguredEditor(document.getElementById("keybindings-editor")!, {
+	"model": keybindingsModelReference.object.textEditorModel,
+	"automaticLayout": true
+});
 
-document.querySelector('#filesystem')!.addEventListener('click', async () => {
-  const dirHandle = await window.showDirectoryPicker()
+document.querySelector("#filesystem")!.addEventListener("click", async () => {
+	const dirHandle = await window.showDirectoryPicker();
 
-  const htmlFileSystemProvider = new HTMLFileSystemProvider(undefined, 'unused', StandaloneServices.get(ILogService))
-  await htmlFileSystemProvider.registerDirectoryHandle(dirHandle)
-  registerFileSystemOverlay(1, htmlFileSystemProvider)
+	const htmlFileSystemProvider = new HTMLFileSystemProvider(undefined, "unused", StandaloneServices.get(ILogService));
+	await htmlFileSystemProvider.registerDirectoryHandle(dirHandle);
+	registerFileSystemOverlay(1, htmlFileSystemProvider);
 
-  vscode.workspace.updateWorkspaceFolders(0, 0, {
-    uri: vscode.Uri.file(dirHandle.name)
-  })
-})
+	vscode.workspace.updateWorkspaceFolders(0, 0, {
+		"uri": vscode.Uri.file(dirHandle.name)
+	});
+});
 
-document.querySelector('#run')!.addEventListener('click', () => {
-  void vscode.debug.startDebugging(undefined, {
-    name: 'Test',
-    request: 'attach',
-    type: 'javascript'
-  })
-})
+document.querySelector("#run")!.addEventListener("click", () => {
+	void vscode.debug.startDebugging(undefined, {
+		"name": "Test",
+		"request": "attach",
+		"type": "javascript"
+	});
+});
 
-document.querySelector('#settingsui')!.addEventListener('click', async () => {
-  await StandaloneServices.get(IPreferencesService).openUserSettings()
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-})
+document.querySelector("#settingsui")!.addEventListener("click", async () => {
+	await StandaloneServices.get(IPreferencesService).openUserSettings();
+	window.scrollTo({ "top": 0, "behavior": "smooth" });
+});
 
-document.querySelector('#keybindingsui')!.addEventListener('click', async () => {
-  await StandaloneServices.get(IPreferencesService).openGlobalKeybindingSettings(false)
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-})
+document.querySelector("#keybindingsui")!.addEventListener("click", async () => {
+	await StandaloneServices.get(IPreferencesService).openGlobalKeybindingSettings(false);
+	window.scrollTo({ "top": 0, "behavior": "smooth" });
+});
 
-document.querySelector('#customEditorPanel')!.addEventListener('click', async () => {
-  const input = new CustomEditorInput({
-    async confirm () {
-      const { confirmed } = await StandaloneServices.get(IDialogService).confirm({
-        message: 'Are you sure you want to close this INCREDIBLE editor pane?'
-      })
-      return confirmed ? ConfirmResult.DONT_SAVE : ConfirmResult.CANCEL
-    },
-    showConfirm () {
-      return true
-    }
-  })
-  let toggle = false
-  const interval = window.setInterval(() => {
-    const title = toggle ? 'Awesome editor pane' : 'Incredible editor pane'
-    input.setTitle(title)
-    input.setName(title)
-    input.setDescription(title)
-    toggle = !toggle
-  }, 1000)
-  input.onWillDispose(() => {
-    window.clearInterval(interval)
-  })
+document.querySelector("#customEditorPanel")!.addEventListener("click", async () => {
+	const input = new CustomEditorInput({
+		"confirm": async function() {
+			const { confirmed } = await StandaloneServices.get(IDialogService).confirm({
+				"message": "Are you sure you want to close this INCREDIBLE editor pane?"
+			});
+			return confirmed ? ConfirmResult.DONT_SAVE : ConfirmResult.CANCEL;
+		},
+		"showConfirm": function() {
+			return true;
+		}
+	});
+	let toggle = false;
+	const interval = window.setInterval(() => {
+		const title = toggle ? "Awesome editor pane" : "Incredible editor pane";
+		input.setTitle(title);
+		input.setName(title);
+		input.setDescription(title);
+		toggle = !toggle;
+	}, 1000);
+	input.onWillDispose(() => {
+		window.clearInterval(interval);
+	});
 
-  await StandaloneServices.get(IEditorService).openEditor(input, {
-    pinned: true
-  })
-})
+	await StandaloneServices.get(IEditorService).openEditor(input, {
+		"pinned": true
+	});
+});
