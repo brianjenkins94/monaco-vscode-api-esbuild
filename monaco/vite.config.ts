@@ -14,93 +14,18 @@ export default defineConfig({
 			"output": {
 				"entryFileNames": `assets/[name].js`,
 				"chunkFileNames": `assets/[name].js`,
-				"assetFileNames": function(assetInfo) {
-					const files = [];
-
-					(function recurse(directory) {
-						for (const file of fs.readdirSync(directory)) {
-							if (fs.statSync(path.join(directory, file)).isDirectory()) {
-								recurse(path.join(directory, file));
-							} else if (file === assetInfo.name) {
-								files.push(path.join(directory, file));
-							}
-						}
-					})(path.join(__dirname, "node_modules", "vscode", "dist"));
-
-					if (files[0] !== undefined) {
-						const outputPath = path.dirname(files[0].substring(path.join(__dirname, "node_modules", "vscode", "dist").length));
-
-						fs.mkdirSync(path.join(__dirname, "dist", "assets", outputPath), { "recursive": true });
-
-						return path.join("assets", outputPath, "[name].[ext]");
-					} else {
-						return "assets/[name].[ext]";
-					}
-				},
-				"manualChunks": {
-					"monaco": [
+				"assetFileNames": "assets/[name].[ext]",
+				"manualChunks": function(id, { getModuleInfo }) {
+					for (const element of [
 						"monaco-editor/esm/vs/editor/editor.api.js",
-						"./src/setup",
-						"vscode/extensions",
-						//
-						"vscode/default-extensions/clojure",
-						"vscode/default-extensions/coffeescript",
-						"vscode/default-extensions/cpp",
-						"vscode/default-extensions/csharp",
-						"vscode/default-extensions/css",
-						"vscode/default-extensions/diff",
-						"vscode/default-extensions/fsharp",
-						"vscode/default-extensions/go",
-						"vscode/default-extensions/groovy",
-						"vscode/default-extensions/html",
-						"vscode/default-extensions/java",
-						"vscode/default-extensions/javascript",
-						"vscode/default-extensions/json",
-						"vscode/default-extensions/julia",
-						"vscode/default-extensions/lua",
-						"vscode/default-extensions/markdown-basics",
-						"vscode/default-extensions/objective-c",
-						"vscode/default-extensions/perl",
-						"vscode/default-extensions/php",
-						"vscode/default-extensions/powershell",
-						"vscode/default-extensions/python",
-						"vscode/default-extensions/r",
-						"vscode/default-extensions/ruby",
-						"vscode/default-extensions/rust",
-						"vscode/default-extensions/scss",
-						"vscode/default-extensions/shellscript",
-						"vscode/default-extensions/sql",
-						"vscode/default-extensions/swift",
-						"vscode/default-extensions/typescript-basics",
-						"vscode/default-extensions/vb",
-						"vscode/default-extensions/xml",
-						"vscode/default-extensions/yaml",
-						"vscode/default-extensions/theme-defaults",
-						"vscode/default-extensions/theme-seti",
-						"vscode/default-extensions/references-view",
-						"vscode/default-extensions/typescript-basics",
-						"vscode/default-extensions/search-result",
-						"vscode/default-extensions/typescript-language-features",
-						"vscode/default-extensions/markdown-language-features",
-						"vscode/default-extensions/json-language-features",
-						"vscode/default-extensions/css-language-features",
-						"vscode/default-extensions/npm",
-						"vscode/default-extensions/css",
-						"vscode/default-extensions/markdown-basics",
-						"vscode/default-extensions/html",
-						"vscode/default-extensions/html-language-features",
-						"vscode/default-extensions/configuration-editing",
-						"vscode/default-extensions/media-preview",
-						"vscode/default-extensions/markdown-math",
-						//
-						'vscode/default-extensions/theme-defaults',
-						'vscode/default-extensions/theme-seti',
-						'vscode/default-extensions/references-view',
-						'vscode/default-extensions/search-result',
-						'vscode/default-extensions/configuration-editing',
-						'vscode/default-extensions/npm',
-						'vscode/default-extensions/media-preview'
-					]
+						"src/setup.ts",
+						"vscode/dist/extensions.js",
+						"vscode/dist/default-extensions"
+					]) {
+						if (id.includes(element)) {
+							return "monaco";
+						}
+					}
 				}
 			}
 		},
@@ -109,10 +34,10 @@ export default defineConfig({
 	"plugins": [
 		replace([
 			[/^import \{.*?\} from (?:"|')\.\/.*?(?:"|');$/mu, function(match) {
-				return match.replace(/\w+ as /gu, "");
+				return match.replace(/[a-z0-9_$]+ as /gui, "");
 			}],
 			[/^export \{ .*? \};$/mu, function(match) {
-				return match.replace(/ as \w+/gu, "");
+				return match.replace(/ as [a-z0-9_$]+/gui, "");
 			}]
 		]),
 		{
