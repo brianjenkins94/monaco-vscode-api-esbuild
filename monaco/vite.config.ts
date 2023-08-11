@@ -3,6 +3,7 @@ import * as fs from "fs";
 import url from "url";
 import * as path from "path";
 import replace from '@stadtlandnetz/rollup-plugin-postprocess';
+import mime from 'mime/lite';
 
 const cdnDomain = "http://127.0.0.2:5173";
 
@@ -38,6 +39,21 @@ export default defineConfig({
 			}],
 			[/^export \{ .*? \};$/mu, function(match) {
 				return match.replace(/ as [a-z0-9_$]+/gui, "");
+			}],
+			[/new URL\((?:"|')(.*?)(?:"|'), self.location\)(?:\.\w+(?:\(\))?)?/gu, function(_, match) {
+				const filePath = path.join(__dirname, "assets", match.substring("/assets/".length));
+
+				//try {
+				let data = "";
+
+				if (fs.existsSync(filePath)) {
+					data = fs.readFileSync(filePath, { "encoding": "base64" });
+				}
+
+				const mimeType = mime.getType(path.extname(filePath));
+
+				return `"data:${mimeType};charset=UTF-8;base64,${data}"`;
+				//} catch (error) {}
 			}]
 		]),
 		{
