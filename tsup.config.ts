@@ -1,14 +1,16 @@
 import { defineConfig } from "tsup";
 import { nodeModulesPolyfillPlugin } from "esbuild-plugins-node-modules-polyfill";
-import { existsSync, promises as fs, readFileSync } from "fs";
+import { existsSync, promises as fs, readFileSync, writeFileSync } from "fs";
 import { resolve } from "import-meta-resolve";
 import * as path from "path";
 import * as url from "url";
 import inlineWorkerPlugin from "esbuild-plugin-inline-worker";
-import mime from "mime/lite.js";
+import JSON5 from "json5";
 
 function esbuildOptions(options, context) {
-	//options.jsxImportSource = "preact";
+	options.assetNames = "[dir]/[name]";
+	options.chunkNames = "[dir]/[name]-[hash]";
+	options.entryNames = "[dir]/[name]";
 }
 
 const newUrlToDataUrlPlugin = {
@@ -34,15 +36,15 @@ const newUrlToDataUrlPlugin = {
 							return;
 						}
 
-						let data = "";
-
-						if (existsSync(filePath)) {
-							data = readFileSync(filePath, { "encoding": "base64" });
+						if (filePath.endsWith(".json")) {
+							writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" }))));
+						} else if (filePath.endsWith(".mp3")) {
+							return "\"data:audio/mpeg;base64,\"";
 						}
 
-						const mimeType = mime.getType(path.extname(filePath));
+						return "import(\"" + filePath + "\")";
 
-						return `"data:${mimeType};charset=UTF-8;base64,${data}"`;
+						//return `"data:${mimeType};charset=UTF-8;base64,${data}"`;
 					}),
 					"loader": path.extname(filePath).substring(1)
 				};
@@ -52,18 +54,14 @@ const newUrlToDataUrlPlugin = {
 };
 
 export default defineConfig({
-	"entry": {
-		"monaco": "monaco/src/main.ts",
-		"setup": "monaco/src/setup.ts"
-	},
 	"esbuildOptions": esbuildOptions,
 	"esbuildPlugins": [
 		{
 			"name": "resolve-worker",
 			"setup": function(build) {
-				build.onResolve({ "filter": /\?worker$/u }, function({ path }) {
+				build.onResolve({ "filter": /\?worker$/u }, function({ "path": filePath }) {
 					return {
-						"path": url.fileURLToPath(resolve(path.replace(/\?worker$/u, ""), import.meta.url))
+						"path": url.fileURLToPath(resolve(filePath.replace(/\?worker$/u, ""), import.meta.url))
 					};
 				});
 
@@ -92,5 +90,14 @@ export default defineConfig({
 			"minify": false
 		})
 	],
+	"loader": {
+		".code-snippets": "json",
+		//".html": "copy",
+		".d.ts": "copy",
+		".map": "empty",
+		".svg": "dataurl",
+		".tmLanguage": "dataurl"
+	},
+	"external": ["fonts"],
 	"treeshake": true
 });

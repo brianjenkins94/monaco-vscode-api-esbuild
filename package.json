@@ -9,13 +9,12 @@
     "postinstall": "node node_modules/vscode/monaco-treemending.js",
     "prebuild": "cd monaco && npm install && rm -rf dist",
     "build": "cd monaco && npm start #tsup monaco/src/main.ts --format esm --treeshake --outDir monaco/dist/",
-    "tsup": "tsup --format esm --treeshake --outDir dist/"
+    "tsup": "tsup main.ts --format esm --treeshake --outDir dist/"
   },
   "devDependencies": {
-    "@esbuild-plugins/node-modules-polyfill": "latest",
-    "@stadtlandnetz/rollup-plugin-postprocess": "latest",
     "@tsconfig/node-lts": "latest",
     "@types/node": "latest",
+    "@types/vscode": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
     "ansi-colors": "latest",
@@ -23,20 +22,19 @@
     "esbuild-plugins-node-modules-polyfill": "latest",
     "eslint": "latest",
     "import-meta-resolve": "latest",
-    "mime": "latest",
-    "rollup": "latest",
+    "json5": "latest",
     "ts-node": "latest",
     "tsup": "latest",
     "typescript": "latest",
-    "vscode": "npm:@codingame/monaco-vscode-api",
     "vscode-oniguruma": "latest",
-    "xterm": "latest",
+    "vscode": "npm:@codingame/monaco-vscode-api",
     "xterm-addon-canvas": "latest",
     "xterm-addon-image": "latest",
     "xterm-addon-search": "latest",
     "xterm-addon-serialize": "latest",
     "xterm-addon-unicode11": "latest",
-    "xterm-addon-webgl": "latest"
+    "xterm-addon-webgl": "latest",
+    "xterm": "latest"
   },
   "engines": {
     "node": ">=18.0.0",

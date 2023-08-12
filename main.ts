@@ -1,20 +1,18 @@
-import "./style.css";
-
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api.js";
-//import './setup'
+import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
+import "./monaco/demo/src/setup";
 import { createConfiguredEditor, createModelReference } from "vscode/monaco";
 import { HTMLFileSystemProvider, registerFileSystemOverlay } from "vscode/service-override/files";
 import * as vscode from "vscode";
 import { IDialogService, IEditorService, ILogService, IPreferencesService, StandaloneServices } from "vscode/services";
 import { ConfirmResult } from "vscode/service-override/views";
-import { CustomEditorInput } from "./features/customView";
-//import './features/debugger'
-import "./features/search";
-import { anotherFakeOutputChannel } from "./features/output";
-import "./features/filesystem";
-import "./features/intellisense";
-import "./features/notifications";
-import "./features/terminal";
+import { CustomEditorInput } from "./monaco/demo/src/features/customView";
+import "./monaco/demo/src/features/search";
+import { anotherFakeOutputChannel } from "./monaco/demo/src/features/output";
+import "./monaco/demo/src/features/filesystem";
+import "./monaco/demo/src/features/intellisense";
+import "./monaco/demo/src/features/notifications";
+import "./monaco/demo/src/features/terminal";
 
 import "vscode/default-extensions/css";
 import "vscode/default-extensions/diff";
@@ -23,16 +21,18 @@ import "vscode/default-extensions/javascript";
 import "vscode/default-extensions/json";
 import "vscode/default-extensions/markdown-basics";
 import "vscode/default-extensions/scss";
+import "vscode/default-extensions/shellscript";
 import "vscode/default-extensions/typescript-basics";
+import "vscode/default-extensions/xml";
+import "vscode/default-extensions/yaml";
 
 import "vscode/default-extensions/theme-defaults";
 import "vscode/default-extensions/theme-seti";
 import "vscode/default-extensions/references-view";
 import "vscode/default-extensions/search-result";
 import "vscode/default-extensions/configuration-editing";
-//import 'vscode/default-extensions/markdown-math'
 import "vscode/default-extensions/npm";
-import "vscode/default-extensions/media-preview";
+//import "vscode/default-extensions/media-preview";
 
 const modelRef = await createModelReference(monaco.Uri.file("/tmp/test.js"), `// import anotherfile
 let variable = 1
@@ -117,14 +117,6 @@ document.querySelector("#filesystem")!.addEventListener("click", async () => {
 
 	vscode.workspace.updateWorkspaceFolders(0, 0, {
 		"uri": vscode.Uri.file(dirHandle.name)
-	});
-});
-
-document.querySelector("#run")!.addEventListener("click", () => {
-	void vscode.debug.startDebugging(undefined, {
-		"name": "Test",
-		"request": "attach",
-		"type": "javascript"
 	});
 });
 

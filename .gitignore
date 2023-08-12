@@ -604,3 +604,6 @@ FodyWeavers.xsd
 
 # npm lockfile
 package-lock.json
+
+# monaco
+/monaco
