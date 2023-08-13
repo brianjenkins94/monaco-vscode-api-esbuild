@@ -8,10 +8,12 @@ import inlineWorkerPlugin from "esbuild-plugin-inline-worker";
 import JSON5 from "json5";
 
 function esbuildOptions(options, context) {
-	options.assetNames = "[dir]/[name]";
-	options.chunkNames = "[dir]/[name]-[hash]";
-	options.entryNames = "[dir]/[name]";
+	options.assetNames = "[name]";
+	options.chunkNames = "[name]-[hash]";
+	options.entryNames = "[name]";
 }
+
+// Handle `new URL("./path/to/asset", import.meta.url)`
 
 const newUrlToDataUrlPlugin = {
 	"name": "new-url-to-data-url",
@@ -40,6 +42,8 @@ const newUrlToDataUrlPlugin = {
 							writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" }))));
 						} else if (filePath.endsWith(".mp3")) {
 							return "\"data:audio/mpeg;base64,\"";
+						} else if (filePath.endsWith(".html")) {
+							
 						}
 
 						return "import(\"" + filePath + "\")";
@@ -53,7 +57,64 @@ const newUrlToDataUrlPlugin = {
 	}
 };
 
+// Chunks
+
+async function findParentPackageJson(directory) {
+	if (existsSync(path.join(directory, "package.json"))) {
+		return path.join(directory, "package.json");
+	} else {
+		return findParentPackageJson(path.dirname(directory));
+	}
+}
+
+async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
+	return Promise.all(
+		Object.entries(chunkAliases).map(async function([chunkAlias, modules]) {
+			const dependencies = [...new Set((await Promise.all(modules.map(async function(module) {
+				let modulePath;
+
+				try {
+					modulePath = url.fileURLToPath(resolve(module, import.meta.url));
+				} catch (error) {
+					modulePath = path.join(__dirname, "node_modules", module);
+
+					if (!existsSync(modulePath)) {
+						return [];
+					}
+				}
+
+				const packageJsonPath = await findParentPackageJson(modulePath);
+
+				const packageJson = await fs.readFile(packageJsonPath, { "encoding": "utf8" });
+
+				return Object.keys(JSON.parse(packageJson).dependencies ?? {}).filter(function(module) {
+					return existsSync(path.join(__dirname, "node_modules", module));
+				});
+			}))).flat(Infinity))];
+
+			await fs.writeFile(path.join(__dirname, "chunks", chunkAlias + ".ts"), dependencies.map(function(module) {
+				return `import "${module}";\n`;
+			}));
+
+			return path.join("chunks/" + chunkAlias + ".ts");
+		})
+	);
+}
+
+// Main Config
+
 export default defineConfig({
+	"entry": [
+		"main.ts",
+		...await manualChunks({
+			"monaco": [
+				"monaco-editor/esm/vs/editor/editor.api.js",
+				"./monaco/demo/src/setup.ts",
+				"vscode/dist/extensions.js",
+				"vscode/dist/default-extensions"
+			]
+		})
+	],
 	"esbuildOptions": esbuildOptions,
 	"esbuildPlugins": [
 		{
@@ -65,7 +126,7 @@ export default defineConfig({
 					};
 				});
 
-				build.onLoad({ "filter": /tools\/workers\.ts$/u }, function(args) {
+				build.onLoad({ "filter": /tools(?:\/|\\)workers\.ts$/u }, function(args) {
 					return {
 						"contents": `
 							export function toCrossOriginWorker(worker) {
@@ -92,7 +153,7 @@ export default defineConfig({
 	],
 	"loader": {
 		".code-snippets": "json",
-		//".html": "copy",
+		".html": "copy",
 		".d.ts": "copy",
 		".map": "empty",
 		".svg": "dataurl",
