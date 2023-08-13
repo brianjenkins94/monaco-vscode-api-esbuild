@@ -1,6 +1,6 @@
 import { defineConfig } from "tsup";
 import { nodeModulesPolyfillPlugin } from "esbuild-plugins-node-modules-polyfill";
-import { existsSync, promises as fs, readFileSync, writeFileSync } from "fs";
+import { copyFileSync, existsSync, promises as fs, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { resolve } from "import-meta-resolve";
 import * as path from "path";
 import * as url from "url";
@@ -8,8 +8,8 @@ import inlineWorkerPlugin from "esbuild-plugin-inline-worker";
 import JSON5 from "json5";
 
 function esbuildOptions(options, context) {
-	options.assetNames = "[name]";
-	options.chunkNames = "[name]-[hash]";
+	options.assetNames = "assets/[name]";
+	options.chunkNames = "assets/[name]-[hash]";
 	options.entryNames = "[name]";
 }
 
@@ -38,12 +38,18 @@ const newUrlToDataUrlPlugin = {
 							return;
 						}
 
-						if (filePath.endsWith(".json")) {
+						if (filePath.endsWith(".html")) {
+							const outputDirectory = path.join(__dirname, "dist", "assets");
+
+							mkdirSync(outputDirectory, { "recursive": true });
+
+							copyFileSync(filePath, path.join(outputDirectory, path.basename(filePath)));
+
+							return "\"/dist/assets/" + path.basename(filePath) + "\"";
+						} else if (filePath.endsWith(".json")) {
 							writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" }))));
 						} else if (filePath.endsWith(".mp3")) {
 							return "\"data:audio/mpeg;base64,\"";
-						} else if (filePath.endsWith(".html")) {
-							
 						}
 
 						return "import(\"" + filePath + "\")";
@@ -87,8 +93,12 @@ async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
 
 				const packageJson = await fs.readFile(packageJsonPath, { "encoding": "utf8" });
 
-				return Object.keys(JSON.parse(packageJson).dependencies ?? {}).filter(function(module) {
-					return existsSync(path.join(__dirname, "node_modules", module));
+				return (await Promise.all(Object.keys(JSON.parse(packageJson).dependencies ?? {}).map(function(module) {
+					return new Promise(function(resolve, reject) {
+						resolve(existsSync(path.join(__dirname, "node_modules", module)) ? module : undefined);
+					});
+				}))).filter(function(element) {
+					return element !== undefined;
 				});
 			}))).flat(Infinity))];
 
@@ -153,7 +163,7 @@ export default defineConfig({
 	],
 	"loader": {
 		".code-snippets": "json",
-		".html": "copy",
+		//".html": "copy",
 		".d.ts": "copy",
 		".map": "empty",
 		".svg": "dataurl",
