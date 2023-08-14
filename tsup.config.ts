@@ -52,7 +52,7 @@ const newUrlToDataUrlPlugin = {
 							return "\"data:audio/mpeg;base64,\"";
 						}
 
-						return "import(\"" + filePath + "\")";
+						return "import(\"./" + path.relative(__dirname, filePath).replace(/\\/gu, "/") + "\")";
 
 						//return `"data:${mimeType};charset=UTF-8;base64,${data}"`;
 					}),
@@ -106,7 +106,7 @@ async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
 				return `import "${module}";\n`;
 			}));
 
-			return path.join("chunks/" + chunkAlias + ".ts");
+			return path.join("chunks", chunkAlias + ".ts");
 		})
 	);
 }
