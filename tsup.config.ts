@@ -1,10 +1,9 @@
 import { defineConfig } from "tsup";
 import { nodeModulesPolyfillPlugin } from "esbuild-plugins-node-modules-polyfill";
-import { copyFileSync, existsSync, promises as fs, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { copyFileSync, existsSync, promises as fs, readFileSync, writeFileSync } from "fs";
 import { resolve } from "import-meta-resolve";
 import * as path from "path";
 import * as url from "url";
-import inlineWorkerPlugin from "esbuild-plugin-inline-worker";
 import JSON5 from "json5";
 
 function esbuildOptions(options, context) {
@@ -12,6 +11,22 @@ function esbuildOptions(options, context) {
 	options.chunkNames = "assets/[name]-[hash]";
 	options.entryNames = "[name]";
 }
+
+async function tsup(options) {
+	return (await import("tsup")).build({
+		"esbuildOptions": esbuildOptions,
+		"esbuildPlugins": [],
+		"format": "esm",
+		"treeshake": true,
+		...options,
+		// WORKAROUND: `tsup` gives the entry straight to `globby` and `globby` doesn't get along with Windows paths.
+		"entry": options.entry.map(function(entry) {
+			return entry.replace(/\\/gu, "/");
+		})
+	});
+}
+
+const distDirectory = path.join(__dirname, "dist", "assets");
 
 // Handle `new URL("./path/to/asset", import.meta.url)`
 
@@ -44,11 +59,7 @@ const newUrlToDataUrlPlugin = {
 							return "\"data:audio/mpeg;base64,\"";
 						}
 
-						const outputDirectory = path.join(__dirname, "dist", "assets");
-
-						mkdirSync(outputDirectory, { "recursive": true });
-
-						copyFileSync(filePath, path.join(outputDirectory, path.basename(filePath)));
+						copyFileSync(filePath, path.join(distDirectory, path.basename(filePath)));
 
 						return "\"/dist/assets/" + path.basename(filePath).replace(/\\/gu, "/") + "\"";
 
@@ -73,8 +84,14 @@ async function findParentPackageJson(directory) {
 	}
 }
 
+const chunksDirectory = path.join(__dirname, "chunks");
+
+await fs.rm(chunksDirectory, { "recursive": true });
+
+await fs.mkdir(chunksDirectory, { "recursive": true });
+
 async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
-	return Promise.all(
+	return Object.fromEntries(await Promise.all(
 		Object.entries(chunkAliases).map(async function([chunkAlias, modules]) {
 			const dependencies = [...new Set((await Promise.all(modules.map(async function(module) {
 				let modulePath;
@@ -102,39 +119,149 @@ async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
 				});
 			}))).flat(Infinity))];
 
-			await fs.writeFile(path.join(__dirname, "chunks", chunkAlias + ".ts"), dependencies.map(function(module) {
-				return `import "${module}";\n`;
+			await fs.writeFile(path.join(chunksDirectory, chunkAlias + ".ts"), dependencies.map(function(module) {
+				return "import \"" + module + "\";\n";
 			}));
 
-			return path.join("chunks", chunkAlias + ".ts");
+			return ["dist/" + chunkAlias, path.join("chunks", chunkAlias + ".ts")];
 		})
-	);
+	));
 }
+
+// Workers
+
+const inlineWorkerPlugin = {
+	"name": "inline-worker",
+	"setup": function(build) {
+		async function buildWorker(workerPath) {
+			await tsup({
+				"config": false,
+				"entry": [workerPath],
+				"esbuildPlugins": [
+					nodeModulesPolyfillPlugin(),
+					newUrlToDataUrlPlugin
+				]
+			});
+
+			return fs.readFile(workerPath, { "encoding": "utf-8" });
+		}
+
+		build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?|\?worker)?$/u }, async function({ "path": workerPath }) {
+			const workerCode = await buildWorker(workerPath);
+
+			return {
+				"contents": `
+					import inlineWorker from '__inline-worker';
+					
+					export default function Worker() {
+						return inlineWorker(${JSON.stringify(workerCode)});
+					}
+				`,
+				"loader": "js"
+			};
+		});
+
+		const inlineWorkerFunctionCode = `
+			export default function inlineWorker(scriptText) {
+				const blob = new Blob([scriptText], { type: 'text/javascript' });
+				const url = URL.createObjectURL(blob);
+				const worker = new Worker(url);
+				URL.revokeObjectURL(url);
+				return worker;
+			}
+		`;
+
+		build.onResolve({ "filter": /^__inline-worker$/u }, function({ path }) {
+			return {
+				"path": path,
+				"namespace": "inline-worker"
+			};
+		});
+
+		build.onLoad({ "filter": /.*/u, "namespace": "inline-worker" }, function() {
+			return {
+				"contents": inlineWorkerFunctionCode,
+				"loader": "js"
+			};
+		});
+	}
+};
+
+const workers = {};
+
+await tsup({
+	"config": false,
+	"entry": ["main.ts"],
+	"esbuildPlugins": [
+		{
+			"name": "enumerate-workers",
+			"setup": function(build) {
+				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?|\?worker)?$/u }, async function({ "path": workerPath }) {
+					workerPath = path.relative(__dirname, workerPath).split("?")[0].replace(/\\/gu, "/");
+
+					const workerChunkPath = path.join(chunksDirectory, path.basename(workerPath, path.extname(workerPath)) + ".ts");
+
+					workers[path.basename(workerPath, path.extname(workerPath))] = [workerChunkPath];
+
+					await fs.writeFile(workerChunkPath, "import \"../" + workerPath + "\";\n");
+
+					return {
+						"contents": `
+							export default function noop() {
+								return;
+							}
+						`,
+						"loader": "js"
+					};
+				});
+			}
+		}
+	]
+});
+
+await fs.rm(path.join(__dirname, "dist"), { "recursive": true });
+
+await fs.mkdir(distDirectory, { "recursive": true });
 
 // Main Config
 
+console.log({
+	"dist/main": "main.ts",
+	...await manualChunks({
+		"monaco": [
+			"monaco-editor/esm/vs/editor/editor.api.js",
+			"./monaco/demo/src/setup.ts",
+			"vscode/dist/extensions.js",
+			"vscode/dist/default-extensions"
+		],
+		...workers
+	})
+});
+
 export default defineConfig({
-	"entry": [
-		"main.ts",
+	"entry": {
+		"dist/main": "main.ts",
 		...await manualChunks({
 			"monaco": [
 				"monaco-editor/esm/vs/editor/editor.api.js",
 				"./monaco/demo/src/setup.ts",
 				"vscode/dist/extensions.js",
 				"vscode/dist/default-extensions"
-			]
+			],
+			...workers
 		})
-	],
+	},
 	"esbuildOptions": esbuildOptions,
 	"esbuildPlugins": [
+		// This can be removed after we figure out if we need `toCrossOriginWorker` or `toWorkerConfig`.
 		{
 			"name": "resolve-worker",
 			"setup": function(build) {
-				build.onResolve({ "filter": /\?worker$/u }, function({ "path": filePath }) {
-					return {
-						"path": url.fileURLToPath(resolve(filePath.replace(/\?worker$/u, ""), import.meta.url))
-					};
-				});
+				//build.onResolve({ "filter": /\?worker$/u }, function({ "path": filePath }) {
+				//	return {
+				//		"path": url.fileURLToPath(resolve(filePath.replace(/\?worker$/u, ""), import.meta.url))
+				//	};
+				//});
 
 				build.onLoad({ "filter": /tools(?:\/|\\)workers\.ts$/u }, function(args) {
 					return {
@@ -153,13 +280,7 @@ export default defineConfig({
 			}
 		},
 		newUrlToDataUrlPlugin,
-		inlineWorkerPlugin({
-			"plugins": [
-				nodeModulesPolyfillPlugin(),
-				newUrlToDataUrlPlugin
-			],
-			"minify": false
-		})
+		inlineWorkerPlugin
 	],
 	"loader": {
 		".code-snippets": "json",
@@ -169,6 +290,8 @@ export default defineConfig({
 		".svg": "dataurl",
 		".tmLanguage": "dataurl"
 	},
-	"external": ["fonts"],
+	"external": [
+		"fonts"
+	],
 	"treeshake": true
 });

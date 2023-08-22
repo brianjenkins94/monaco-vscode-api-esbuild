@@ -607,3 +607,6 @@ package-lock.json
 
 # monaco
 /monaco
+
+# intermediate build output
+/chunks
