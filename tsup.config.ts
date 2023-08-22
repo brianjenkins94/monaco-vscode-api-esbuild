@@ -93,35 +93,37 @@ await fs.mkdir(chunksDirectory, { "recursive": true });
 async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
 	return Object.fromEntries(await Promise.all(
 		Object.entries(chunkAliases).map(async function([chunkAlias, modules]) {
-			const dependencies = [...new Set((await Promise.all(modules.map(async function(module) {
-				let modulePath;
+			if (!existsSync(path.join(chunksDirectory, chunkAlias + ".ts"))) {
+				const dependencies = [...new Set((await Promise.all(modules.map(async function(module) {
+					let modulePath;
 
-				try {
-					modulePath = url.fileURLToPath(resolve(module, import.meta.url));
-				} catch (error) {
-					modulePath = path.join(__dirname, "node_modules", module);
+					try {
+						modulePath = url.fileURLToPath(resolve(module, import.meta.url));
+					} catch (error) {
+						modulePath = path.join(__dirname, "node_modules", module);
 
-					if (!existsSync(modulePath)) {
-						return [];
+						if (!existsSync(modulePath)) {
+							return [];
+						}
 					}
-				}
 
-				const packageJsonPath = await findParentPackageJson(modulePath);
+					const packageJsonPath = await findParentPackageJson(modulePath);
 
-				const packageJson = await fs.readFile(packageJsonPath, { "encoding": "utf8" });
+					const packageJson = await fs.readFile(packageJsonPath, { "encoding": "utf8" });
 
-				return (await Promise.all(Object.keys(JSON.parse(packageJson).dependencies ?? {}).map(function(module) {
-					return new Promise(function(resolve, reject) {
-						resolve(existsSync(path.join(__dirname, "node_modules", module)) ? module : undefined);
+					return (await Promise.all(Object.keys(JSON.parse(packageJson).dependencies ?? {}).map(function(module) {
+						return new Promise(function(resolve, reject) {
+							resolve(existsSync(path.join(__dirname, "node_modules", module)) ? module : undefined);
+						});
+					}))).filter(function(element) {
+						return element !== undefined;
 					});
-				}))).filter(function(element) {
-					return element !== undefined;
-				});
-			}))).flat(Infinity))];
+				}))).flat(Infinity))];
 
-			await fs.writeFile(path.join(chunksDirectory, chunkAlias + ".ts"), dependencies.map(function(module) {
-				return "import \"" + module + "\";\n";
-			}));
+				await fs.writeFile(path.join(chunksDirectory, chunkAlias + ".ts"), dependencies.map(function(module) {
+					return "import \"" + module + "\";\n";
+				}));
+			}
 
 			return ["dist/" + chunkAlias, path.join("chunks", chunkAlias + ".ts")];
 		})
@@ -143,7 +145,7 @@ const inlineWorkerPlugin = {
 				]
 			});
 
-			return fs.readFile(workerPath, { "encoding": "utf-8" });
+			return fs.readFile(path.join(__dirname, "dist", path.basename(workerPath, path.extname(workerPath)) + ".js"), { "encoding": "utf8" });
 		}
 
 		build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?|\?worker)?$/u }, async function({ "path": workerPath }) {
