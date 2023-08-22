@@ -38,21 +38,21 @@ const newUrlToDataUrlPlugin = {
 							return;
 						}
 
-						if (filePath.endsWith(".html")) {
-							const outputDirectory = path.join(__dirname, "dist", "assets");
-
-							mkdirSync(outputDirectory, { "recursive": true });
-
-							copyFileSync(filePath, path.join(outputDirectory, path.basename(filePath)));
-
-							return "\"/dist/assets/" + path.basename(filePath) + "\"";
-						} else if (filePath.endsWith(".json")) {
+						if (filePath.endsWith(".json")) {
 							writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" }))));
 						} else if (filePath.endsWith(".mp3")) {
 							return "\"data:audio/mpeg;base64,\"";
 						}
 
-						return "import(\"./" + path.relative(__dirname, filePath).replace(/\\/gu, "/") + "\")";
+						const outputDirectory = path.join(__dirname, "dist", "assets");
+
+						mkdirSync(outputDirectory, { "recursive": true });
+
+						copyFileSync(filePath, path.join(outputDirectory, path.basename(filePath)));
+
+						return "\"/dist/assets/" + path.basename(filePath).replace(/\\/gu, "/") + "\"";
+
+						//return "\"./" + path.relative(parentDirectory, filePath).replace(/\\/gu, "/") + "\"";
 
 						//return `"data:${mimeType};charset=UTF-8;base64,${data}"`;
 					}),
