@@ -201,11 +201,11 @@ await tsup({
 				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?|\?worker)?$/u }, async function({ "path": workerPath }) {
 					workerPath = path.relative(__dirname, workerPath).split("?")[0].replace(/\\/gu, "/");
 
-					const workerChunkPath = path.join(chunksDirectory, path.basename(workerPath, path.extname(workerPath)) + ".ts");
+					const workerChunkPath = path.join(chunksDirectory, path.basename(workerPath, path.extname(workerPath)));
 
-					workers[path.basename(workerPath, path.extname(workerPath))] = [workerChunkPath];
+					workers[path.basename(workerChunkPath)] = [workerChunkPath + ".js"];
 
-					await fs.writeFile(workerChunkPath, "import \"../" + workerPath + "\";\n");
+					await fs.writeFile(workerChunkPath + ".ts", "import \"../" + workerPath + "\";\n");
 
 					return {
 						"contents": `
