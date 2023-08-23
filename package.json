@@ -29,8 +29,5 @@
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
   },
-  "sideEffects": false,
-  "dependencies": {
-    "vscode": "npm:@codingame/monaco-vscode-api@^1.81.4"
-  }
+  "sideEffects": false
 }

@@ -194,10 +194,6 @@ await tsup({
 		{
 			"name": "enumerate-workers",
 			"setup": function(build) {
-				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": workerPath }) {
-					console.log(workerPath);
-				});
-
 				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, async function({ "path": workerPath }) {
 					workerPath = path.relative(__dirname, workerPath).split("?")[0].replace(/\\/gu, "/");
 
@@ -240,8 +236,6 @@ console.log({
 	})
 });
 
-process.exit(0);
-
 export default defineConfig({
 	"entry": {
 		"dist/main": "main.ts",
@@ -277,7 +271,8 @@ export default defineConfig({
 				});
 			}
 		},
-		importMetaUrlPlugin
+		importMetaUrlPlugin,
+		workerPlugin
 	],
 	"loader": {
 		".code-snippets": "json",
