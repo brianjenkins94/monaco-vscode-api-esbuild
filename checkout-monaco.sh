@@ -15,6 +15,7 @@ else
 fi
 
 cd demo
+npm uninstall dockerode
 npm install --ignore-scripts
 npm install vscode@npm:@codingame/monaco-vscode-api -f
 node node_modules/vscode/monaco-treemending.js
