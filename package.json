@@ -6,7 +6,6 @@
   "author": "Brian Jenkins",
   "license": "MIT",
   "scripts": {
-    "postinstall": "node node_modules/vscode/monaco-treemending.js",
     "prebuild": "cd monaco && npm install && rm -rf dist",
     "build": "cd monaco/demo && npm start #tsup monaco/src/main.ts --format esm --treeshake --outDir monaco/dist/",
     "tsup": "tsup --format esm --treeshake --outDir dist/"
@@ -24,16 +23,7 @@
     "json5": "latest",
     "ts-node": "latest",
     "tsup": "latest",
-    "typescript": "latest",
-    "vscode-oniguruma": "latest",
-    "vscode": "npm:@codingame/monaco-vscode-api",
-    "xterm-addon-canvas": "latest",
-    "xterm-addon-image": "latest",
-    "xterm-addon-search": "latest",
-    "xterm-addon-serialize": "latest",
-    "xterm-addon-unicode11": "latest",
-    "xterm-addon-webgl": "latest",
-    "xterm": "latest"
+    "typescript": "latest"
   },
   "engines": {
     "node": ">=18.0.0",

@@ -5,9 +5,9 @@ import { HTMLFileSystemProvider, registerFileSystemOverlay } from "vscode/servic
 import * as vscode from "vscode";
 import { IDialogService, IEditorService, ILogService, IPreferencesService, StandaloneServices } from "vscode/services";
 import { ConfirmResult } from "vscode/service-override/views";
-import { clearStorage } from "./monaco/demo/src/setup";
+import "./monaco/demo/src/setup";
 import { CustomEditorInput } from "./monaco/demo/src/features/customView";
-import "./monaco/demo/src/features/debugger";
+//import "./monaco/demo/src/features/debugger";
 import "./monaco/demo/src/features/search";
 import { anotherFakeOutputChannel } from "./monaco/demo/src/features/output";
 import "./monaco/demo/src/features/filesystem";
@@ -53,9 +53,9 @@ import "vscode/default-extensions/theme-seti";
 import "vscode/default-extensions/references-view";
 import "vscode/default-extensions/search-result";
 import "vscode/default-extensions/configuration-editing";
-import "vscode/default-extensions/markdown-math";
+//import "vscode/default-extensions/markdown-math";
 import "vscode/default-extensions/npm";
-import "vscode/default-extensions/media-preview";
+//import "vscode/default-extensions/media-preview";
 
 const modelRef = await createModelReference(monaco.Uri.file("/tmp/test.js"), `// import anotherfile
 let variable = 1
@@ -181,17 +181,3 @@ document.querySelector("#customEditorPanel")!.addEventListener("click", async ()
 		"pinned": true
 	});
 });
-
-document.querySelector("#clearStorage")!.addEventListener("click", async () => {
-	await clearStorage();
-});
-
-/*
-document.querySelector("#togglePanel")!.addEventListener("click", async () => {
-	setPartVisibility(Parts.PANEL_PART, !isPartVisibile(Parts.PANEL_PART));
-});
-
-document.querySelector("#toggleAuxiliary")!.addEventListener("click", async () => {
-	setPartVisibility(Parts.AUXILIARYBAR_PART, !isPartVisibile(Parts.AUXILIARYBAR_PART));
-});
-*/
