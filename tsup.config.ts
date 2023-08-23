@@ -30,7 +30,7 @@ const distDirectory = path.join(__dirname, "dist", "assets");
 
 // Handle `new URL("./path/to/asset", import.meta.url)`
 
-const newUrlToDataUrlPlugin = {
+const importMetaUrlPlugin = {
 	"name": "new-url-to-data-url",
 	"setup": function(build) {
 		build.onLoad({ "filter": /.*/u }, async function({ "path": filePath }) {
@@ -62,10 +62,6 @@ const newUrlToDataUrlPlugin = {
 						copyFileSync(filePath, path.join(distDirectory, path.basename(filePath)));
 
 						return "\"/dist/assets/" + path.basename(filePath).replace(/\\/gu, "/") + "\"";
-
-						//return "\"./" + path.relative(parentDirectory, filePath).replace(/\\/gu, "/") + "\"";
-
-						//return `"data:${mimeType};charset=UTF-8;base64,${data}"`;
 					}),
 					"loader": path.extname(filePath).substring(1)
 				};
@@ -129,65 +125,6 @@ async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
 		})
 	));
 }
-
-// Workers
-
-const inlineWorkerPlugin = {
-	"name": "inline-worker",
-	"setup": function(build) {
-		async function buildWorker(workerPath) {
-			await tsup({
-				"config": false,
-				"entry": [workerPath],
-				"esbuildPlugins": [
-					nodeModulesPolyfillPlugin(),
-					newUrlToDataUrlPlugin
-				]
-			});
-
-			return fs.readFile(path.join(__dirname, "dist", path.basename(workerPath, path.extname(workerPath)) + ".js"), { "encoding": "utf8" });
-		}
-
-		build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?|\?worker)?$/u }, async function({ "path": workerPath }) {
-			const workerCode = await buildWorker(workerPath);
-
-			return {
-				"contents": `
-					import inlineWorker from '__inline-worker';
-					
-					export default function Worker() {
-						return inlineWorker(${JSON.stringify(workerCode)});
-					}
-				`,
-				"loader": "js"
-			};
-		});
-
-		const inlineWorkerFunctionCode = `
-			export default function inlineWorker(scriptText) {
-				const blob = new Blob([scriptText], { type: 'text/javascript' });
-				const url = URL.createObjectURL(blob);
-				const worker = new Worker(url);
-				URL.revokeObjectURL(url);
-				return worker;
-			}
-		`;
-
-		build.onResolve({ "filter": /^__inline-worker$/u }, function({ path }) {
-			return {
-				"path": path,
-				"namespace": "inline-worker"
-			};
-		});
-
-		build.onLoad({ "filter": /.*/u, "namespace": "inline-worker" }, function() {
-			return {
-				"contents": inlineWorkerFunctionCode,
-				"loader": "js"
-			};
-		});
-	}
-};
 
 const workers = {};
 
@@ -281,8 +218,7 @@ export default defineConfig({
 				});
 			}
 		},
-		newUrlToDataUrlPlugin,
-		inlineWorkerPlugin
+		importMetaUrlPlugin
 	],
 	"loader": {
 		".code-snippets": "json",
