@@ -137,13 +137,6 @@ const entry = {
 			"vscode/dist/default-extensions"
 		]
 	})
-	/* Workers
-	"dist/outputLinkComputer.worker": "monaco/demo/node_modules/vscode/dist/workers/outputLinkComputer.worker.js",
-	"dist/editor.worker": "monaco/demo/node_modules/monaco-editor/esm/vs/editor/editor.worker.js",
-	"dist/extensionHost.worker": "monaco/demo/node_modules/vscode/dist/workers/extensionHost.worker.js",
-	"dist/textMate.worker": "monaco/demo/node_modules/vscode/dist/workers/textMate.worker.js",
-	"dist/languageDetection.worker": "monaco/demo/node_modules/vscode/dist/workers/languageDetection.worker.js"
-	*/
 };
 
 await tsup({
