@@ -6,9 +6,10 @@
   "author": "Brian Jenkins",
   "license": "MIT",
   "scripts": {
-    "prebuild": "cd monaco && npm install && rm -rf dist",
-    "build": "cd monaco/demo && npm start #tsup monaco/src/main.ts --format esm --treeshake --outDir monaco/dist/",
-    "tsup": "tsup --format esm --treeshake --outDir dist/"
+    "build": "tsup --format esm --treeshake --outDir dist/",
+    "postinstall": "./checkout-monaco.sh",
+    "serve": "npx http-server",
+    "start": "npm run serve"
   },
   "devDependencies": {
     "@tsconfig/node-lts": "latest",
@@ -29,5 +30,8 @@
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "dependencies": {
+    "vscode": "npm:@codingame/monaco-vscode-api@^1.81.4"
+  }
 }
