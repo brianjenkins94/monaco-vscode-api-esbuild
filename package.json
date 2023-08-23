@@ -17,7 +17,6 @@
     "@types/vscode": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
-    "ansi-colors": "latest",
     "esbuild-plugins-node-modules-polyfill": "latest",
     "eslint": "latest",
     "import-meta-resolve": "latest",

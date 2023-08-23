@@ -126,6 +126,65 @@ async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
 	));
 }
 
+// Workers
+
+const workerPlugin = {
+	"name": "inline-worker",
+	"setup": function(build) {
+		async function buildWorker(workerPath) {
+			await tsup({
+				"config": false,
+				"entry": [workerPath],
+				"esbuildPlugins": [
+					nodeModulesPolyfillPlugin(),
+					importMetaUrlPlugin
+				]
+			});
+
+			return fs.readFile(path.join(__dirname, "dist", path.basename(workerPath, path.extname(workerPath)) + ".js"), { "encoding": "utf8" });
+		}
+
+		build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, async function({ "path": workerPath }) {
+			const workerCode = await buildWorker(workerPath);
+
+			return {
+				"contents": `
+					import inlineWorker from '__inline-worker';
+					
+					export default function Worker() {
+						return inlineWorker(${JSON.stringify(workerCode)});
+					}
+				`,
+				"loader": "js"
+			};
+		});
+
+		const inlineWorkerFunctionCode = `
+			export default function inlineWorker(scriptText) {
+				const blob = new Blob([scriptText], { type: 'text/javascript' });
+				const url = URL.createObjectURL(blob);
+				const worker = new Worker(url);
+				URL.revokeObjectURL(url);
+				return worker;
+			}
+		`;
+
+		build.onResolve({ "filter": /^__inline-worker$/u }, function({ path }) {
+			return {
+				"path": path,
+				"namespace": "inline-worker"
+			};
+		});
+
+		build.onLoad({ "filter": /.*/u, "namespace": "inline-worker" }, function() {
+			return {
+				"contents": inlineWorkerFunctionCode,
+				"loader": "js"
+			};
+		});
+	}
+};
+
 const workers = {};
 
 await tsup({
@@ -135,7 +194,11 @@ await tsup({
 		{
 			"name": "enumerate-workers",
 			"setup": function(build) {
-				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?|\?worker)?$/u }, async function({ "path": workerPath }) {
+				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": workerPath }) {
+					console.log(workerPath);
+				});
+
+				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, async function({ "path": workerPath }) {
 					workerPath = path.relative(__dirname, workerPath).split("?")[0].replace(/\\/gu, "/");
 
 					const workerChunkPath = path.join(chunksDirectory, path.basename(workerPath, path.extname(workerPath)));
@@ -177,6 +240,8 @@ console.log({
 	})
 });
 
+process.exit(0);
+
 export default defineConfig({
 	"entry": {
 		"dist/main": "main.ts",
@@ -196,12 +261,6 @@ export default defineConfig({
 		{
 			"name": "resolve-worker",
 			"setup": function(build) {
-				//build.onResolve({ "filter": /\?worker$/u }, function({ "path": filePath }) {
-				//	return {
-				//		"path": url.fileURLToPath(resolve(filePath.replace(/\?worker$/u, ""), import.meta.url))
-				//	};
-				//});
-
 				build.onLoad({ "filter": /tools(?:\/|\\)workers\.ts$/u }, function(args) {
 					return {
 						"contents": `
