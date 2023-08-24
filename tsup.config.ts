@@ -126,17 +126,7 @@ async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
 
 // Workers
 
-const entry = {
-	"main": "main.ts",
-	...await manualChunks({
-		"monaco": [
-			"monaco-editor/esm/vs/editor/editor.api.js",
-			"./monaco/demo/src/setup.ts",
-			"vscode/dist/extensions.js",
-			"vscode/dist/default-extensions"
-		]
-	})
-};
+const workers = {};
 
 await tsup({
 	"config": false,
@@ -145,14 +135,16 @@ await tsup({
 		{
 			"name": "enumerate-workers",
 			"setup": function(build) {
-				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": workerPath }) {
+				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, async function({ "path": workerPath }) {
 					workerPath = path.relative(__dirname, workerPath).split("?")[0].replace(/\\/gu, "/");
 
 					const workerChunkPath = path.join(chunksDirectory, path.basename(workerPath, path.extname(workerPath)));
 
-					entry[path.basename(workerChunkPath)] = workerPath; //[workerChunkPath + ".js"];
+					workers[path.basename(workerChunkPath)] = [workerChunkPath + ".js"];
 
-					//await fs.writeFile(workerChunkPath + ".ts", "import \"../" + workerPath + "\";\n");
+					//entry[path.basename(workerChunkPath)] = workerPath; //[workerChunkPath + ".js"];
+
+					await fs.writeFile(workerChunkPath + ".ts", "import \"../" + workerPath + "\";\n");
 
 					return {
 						"contents": `
@@ -168,7 +160,6 @@ await tsup({
 	]
 });
 
-
 if (existsSync(distDirectory)) {
 	await fs.rm(distDirectory, { "recursive": true });
 }
@@ -176,6 +167,19 @@ if (existsSync(distDirectory)) {
 await fs.mkdir(assetsDirectory, { "recursive": true });
 
 // Main Config
+
+const entry = {
+	"main": "main.ts",
+	...await manualChunks({
+		"monaco": [
+			"monaco-editor/esm/vs/editor/editor.api.js",
+			"./monaco/demo/src/setup.ts",
+			"vscode/dist/extensions.js",
+			"vscode/dist/default-extensions"
+		],
+		...workers
+	})
+};
 
 console.log(entry);
 
@@ -186,35 +190,40 @@ export default defineConfig({
 		{
 			"name": "resolve-worker",
 			"setup": function(build) {
+				// This can be removed after we figure out if we need `toCrossOriginWorker` or `toWorkerConfig`.
+				build.onLoad({ "filter": /tools(?:\/|\\)workers\.ts$/u }, function(args) {
+					return {
+						"contents": `
+							export function toCrossOriginWorker(worker) {
+								return worker;
+							}
+							export function toWorkerConfig(worker) {
+								return worker;
+							}
+						`,
+						"loader": "ts"
+					};
+				});
+
 				build.onResolve({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": filePath, importer }) {
 					if (filePath.startsWith(".")) {
 						return;
 					}
 
 					const baseName = path.basename(filePath.replace(/\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u, ".worker"));
-					filePath = importer.endsWith("setup.ts") ? "./" + baseName + ".js" : path.join(__dirname, "monaco", "demo", "node_modules", filePath);
+					//filePath = importer.endsWith("setup.ts") ? "./" + baseName + ".js" : path.join(__dirname, "monaco", "demo", "node_modules", filePath);
 
 					return {
-						"path": filePath,
-						"external": importer.endsWith("setup.ts")
+						"path": path.join(__dirname, "chunks", baseName + ".ts")
+						//"external": importer.endsWith("setup.ts")
 					};
 				});
 
 				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": workerPath }) {
-					tsup({
-						"config": false,
-						"entry": [workerPath],
-						"esbuildOptions": function(options, context) {
-							options.entryNames = "assets/[name]";
-						},
-						"format": "iife"
-					});
-
-					// A relative path would be preferable.
 					return {
 						"contents": `
 							export default function() {
-								return new Worker("/dist/assets/${path.basename(workerPath, path.extname(workerPath)) + ".global.js"}");
+								return new Worker("/dist/${path.basename(workerPath, path.extname(workerPath)) + ".js"}", { "type": "module" });
 							}
 						`,
 						"loader": "js"
