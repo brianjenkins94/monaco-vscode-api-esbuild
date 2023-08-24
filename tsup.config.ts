@@ -25,18 +25,15 @@ async function tsup(options) {
 	});
 }
 
-const distDirectory = path.join(__dirname, "dist", "assets");
+const distDirectory = path.join(__dirname, "dist");
+const assetsDirectory = path.join(distDirectory, "assets");
 
 // Handle `new URL("./path/to/asset", import.meta.url)`
 
 const importMetaUrlPlugin = {
-	"name": "new-url-to-data-url",
+	"name": "import-meta-url",
 	"setup": function(build) {
 		build.onLoad({ "filter": /.*/u }, async function({ "path": filePath }) {
-			if (!existsSync(filePath)) {
-				return;
-			}
-
 			const contents = await fs.readFile(filePath, { "encoding": "utf8" });
 
 			const newUrlRegEx = /new URL\((?:"|')(.*?)(?:"|'), import\.meta\.url\)(?:\.\w+(?:\(\))?)?/gu;
@@ -58,7 +55,7 @@ const importMetaUrlPlugin = {
 							return "\"data:audio/mpeg;base64,\"";
 						}
 
-						copyFileSync(filePath, path.join(distDirectory, path.basename(filePath)));
+						copyFileSync(filePath, path.join(assetsDirectory, path.basename(filePath)));
 
 						return "\"/dist/assets/" + path.basename(filePath).replace(/\\/gu, "/") + "\"";
 					}),
@@ -81,7 +78,9 @@ async function findParentPackageJson(directory) {
 
 const chunksDirectory = path.join(__dirname, "chunks");
 
-await fs.rm(chunksDirectory, { "recursive": true });
+if (existsSync(chunksDirectory)) {
+	await fs.rm(chunksDirectory, { "recursive": true });
+}
 
 await fs.mkdir(chunksDirectory, { "recursive": true });
 
@@ -120,7 +119,7 @@ async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
 				}));
 			}
 
-			return ["dist/assets/" + chunkAlias, path.join("chunks", chunkAlias + ".ts")];
+			return [chunkAlias, path.join("chunks", chunkAlias + ".ts")];
 		})
 	));
 }
@@ -128,7 +127,7 @@ async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
 // Workers
 
 const entry = {
-	"dist/main": "main.ts",
+	"main": "main.ts",
 	...await manualChunks({
 		"monaco": [
 			"monaco-editor/esm/vs/editor/editor.api.js",
@@ -151,7 +150,7 @@ await tsup({
 
 					const workerChunkPath = path.join(chunksDirectory, path.basename(workerPath, path.extname(workerPath)));
 
-					entry["dist/" + path.basename(workerChunkPath)] = workerPath; //[workerChunkPath + ".js"];
+					entry[path.basename(workerChunkPath)] = workerPath; //[workerChunkPath + ".js"];
 
 					//await fs.writeFile(workerChunkPath + ".ts", "import \"../" + workerPath + "\";\n");
 
@@ -169,9 +168,12 @@ await tsup({
 	]
 });
 
-await fs.rm(path.join(__dirname, "dist"), { "recursive": true });
 
-await fs.mkdir(distDirectory, { "recursive": true });
+if (existsSync(distDirectory)) {
+	await fs.rm(distDirectory, { "recursive": true });
+}
+
+await fs.mkdir(assetsDirectory, { "recursive": true });
 
 // Main Config
 
@@ -184,7 +186,7 @@ export default defineConfig({
 		{
 			"name": "resolve-worker",
 			"setup": function(build) {
-				build.onResolve({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": filePath, importer, resolveDir }) {
+				build.onResolve({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": filePath, importer }) {
 					if (filePath.startsWith(".")) {
 						return;
 					}
@@ -197,20 +199,34 @@ export default defineConfig({
 						"external": importer.endsWith("setup.ts")
 					};
 				});
+
+				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": workerPath }) {
+					tsup({
+						"config": false,
+						"entry": [workerPath],
+						"esbuildOptions": function(options, context) {
+							options.entryNames = "assets/[name]";
+						},
+						"format": "iife"
+					});
+
+					// A relative path would be preferable.
+					return {
+						"contents": `
+							export default function() {
+								return new Worker("/dist/assets/${path.basename(workerPath, path.extname(workerPath)) + ".global.js"}");
+							}
+						`,
+						"loader": "js"
+					};
+				});
 			}
 		},
 		importMetaUrlPlugin
 	],
-	"loader": {
-		".code-snippets": "json",
-		//".html": "copy",
-		".d.ts": "copy",
-		".map": "empty",
-		".svg": "dataurl",
-		".tmLanguage": "dataurl"
-	},
 	"external": [
 		"fonts"
 	],
+	"format": "esm",
 	"treeshake": true
 });

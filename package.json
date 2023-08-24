@@ -6,7 +6,7 @@
   "author": "Brian Jenkins",
   "license": "MIT",
   "scripts": {
-    "build": "tsup --format esm --treeshake --outDir dist/",
+    "build": "tsup",
     "postinstall": "./checkout-monaco.sh",
     "serve": "npx http-server",
     "start": "npm run serve"
