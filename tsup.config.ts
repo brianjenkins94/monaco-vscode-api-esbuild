@@ -45,11 +45,31 @@ const importMetaUrlPlugin = {
 				const imports = {};
 
 				contents = contents.replace(newUrlRegEx, function(_, match) {
-					const filePath = path.join(parentDirectory, match);
+					let filePath = path.join(parentDirectory, match);
 					let baseName = path.basename(filePath);
 
 					if (!existsSync(filePath)) {
-						return;
+						const fallbackPath = path.join(__dirname, "monaco", "demo", "node_modules", match);
+
+						if (existsSync(fallbackPath)) {
+							filePath = fallbackPath;
+							baseName = path.basename(filePath);
+							match = "./dist/assets/" + baseName;
+
+							copyFileSync(filePath, path.join(assetsDirectory, baseName));
+
+							/*
+							const validIdentifier = "__" + baseName.replace(/(?:\p{Pd}|\p{Ps}|\p{Pe}|\p{Po}|\s)+(.)/gu, function(_, match) {
+								return match.toUpperCase();
+							});
+
+							imports[validIdentifier] = filePath;
+
+							return validIdentifier;
+							*/
+						} else {
+							return;
+						}
 					}
 
 					if (filePath.endsWith(".code-snippets")) {
@@ -58,39 +78,54 @@ const importMetaUrlPlugin = {
 						copyFileSync(filePath, path.join(assetsDirectory, baseName));
 
 						return "\"/dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
+					} else if (filePath.endsWith(".js")) {
+						return "\"" + match + "\"";
 					} else if (filePath.endsWith(".json")) {
 						writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" }))));
 					} else if (filePath.endsWith(".mp3")) {
 						return "\"data:audio/mpeg;base64,\"";
 					}
 
-					// Caching opportunity here:
-					const file = readFileSync(filePath);
+					const validIdentifier = "__" + baseName.replace(/(?:\p{Pd}|\p{Ps}|\p{Pe}|\p{Po}|\s)+(.)/gu, function(_, match) {
+						return match.toUpperCase();
+					});
 
-					try {
-						// If it's JSON-like
-						JSON.parse(file.toString("utf8"));
+					for (let x = 0, importName = validIdentifier; ; x++, importName = validIdentifier + "$" + x) {
+						if (imports[importName] === undefined || imports[validIdentifier] === filePath) {
+							// Caching opportunity here:
+							const file = readFileSync(filePath);
 
-						const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
+							const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
 
-						const extension = path.extname(baseName);
-						baseName = path.basename(baseName, extension);
+							const extension = path.extname(baseName);
+							baseName = path.basename(baseName, extension);
 
-						baseName = baseName + "-" + hash + extension;
+							baseName = baseName + "-" + hash + extension;
 
-						// Copy it to the assets directory
-						copyFileSync(filePath, path.join(assetsDirectory, baseName));
+							try {
+								// If it's JSON-like
+								JSON.parse(file.toString("utf8"));
 
-						// So that we can refer to it by its unique name.
-						return "\"./dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
-					} catch (error) {
-						// Otherwise, leave it unchanged.
-						return "\"" + match + "\"";
+								// Copy it to the assets directory
+								copyFileSync(filePath, path.join(assetsDirectory, baseName));
+
+								// So that we can refer to it by its unique name.
+								return "\"./dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
+							} catch (error) {
+								// Otherwise, leave it unchanged.
+								return "\"" + match + "\"";
+							}
+						}
 					}
 				});
 
 				return {
-					"contents": contents,
+					"contents": [
+						...Object.entries(imports).map(function([name, filePath]) {
+							return "import " + name + " from \"" + filePath + "\";";
+						}),
+						contents
+					].join("\n"),
 					"loader": path.extname(filePath).substring(1)
 				};
 			}
@@ -269,8 +304,11 @@ export default defineConfig({
 		"fonts"
 	],
 	"loader": {
+		".bin": "copy",
 		".map": "empty",
-		".svg": "dataurl"
+		".svg": "dataurl",
+		".tmLanguage": "dataurl",
+		".wasm": "copy"
 	},
 	"treeshake": true
 });
