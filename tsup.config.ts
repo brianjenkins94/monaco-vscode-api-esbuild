@@ -64,39 +64,28 @@ const importMetaUrlPlugin = {
 						return "\"data:audio/mpeg;base64,\"";
 					}
 
-					// All of this naming logic can go.
-					const validIdentifier = "__" + baseName.replace(/(?:\p{Pd}|\p{Ps}|\p{Pe}|\p{Po}|\s)+(.)/gu, function(_, match) {
-						return match.toUpperCase();
-					});
+					// Caching opportunity here:
+					const file = readFileSync(filePath);
 
-					for (let x = 0, importName = validIdentifier; ; x++, importName = validIdentifier + "$" + x) {
-						if (imports[importName] === undefined || imports[validIdentifier] === filePath) {
-							// Caching opportunity here:
-							const file = readFileSync(filePath);
+					try {
+						// If it's JSON-like
+						JSON.parse(file.toString("utf8"));
 
-							try {
-								// If it's JSON-like
-								JSON.parse(file.toString("utf8"));
+						const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
 
-								const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
+						const extension = path.extname(baseName);
+						baseName = path.basename(baseName, extension);
 
-								const extension = path.extname(baseName);
-								baseName = path.basename(baseName, extension);
-	
-								baseName = baseName + "-" + hash + extension;
-	
-								console.log("Manually copying " + baseName);
+						baseName = baseName + "-" + hash + extension;
 
-								copyFileSync(filePath, path.join(assetsDirectory, baseName));
-	
-								//imports[importName] = path.relative(path.dirname(filePath), path.join(assetsDirectory, baseName));
-	
-								return "\"./dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
-							} catch (error) {
-								// Otherwise, leave it unchanged.
-								return "\"" + match + "\"";
-							}
-						}
+						// Copy it to the assets directory
+						copyFileSync(filePath, path.join(assetsDirectory, baseName));
+
+						// So that we can refer to it by its unique name.
+						return "\"./dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
+					} catch (error) {
+						// Otherwise, leave it unchanged.
+						return "\"" + match + "\"";
 					}
 				});
 
