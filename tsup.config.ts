@@ -1,4 +1,5 @@
 import { copyFileSync, existsSync, promises as fs, readFileSync, writeFileSync } from "fs";
+import { createHash } from "crypto";
 import { defineConfig } from "tsup";
 import { resolve } from "import-meta-resolve";
 import * as path from "path";
@@ -34,31 +35,73 @@ const importMetaUrlPlugin = {
 	"name": "import-meta-url",
 	"setup": function(build) {
 		build.onLoad({ "filter": /.*/u }, async function({ "path": filePath }) {
-			const contents = await fs.readFile(filePath, { "encoding": "utf8" });
+			let contents = await fs.readFile(filePath, { "encoding": "utf8" });
 
 			const newUrlRegEx = /new URL\((?:"|')(.*?)(?:"|'), import\.meta\.url\)(?:\.\w+(?:\(\))?)?/gu;
 
 			const parentDirectory = path.dirname(filePath);
 
 			if (newUrlRegEx.test(contents)) {
+				const imports = {};
+
+				contents = contents.replace(newUrlRegEx, function(_, match) {
+					const filePath = path.join(parentDirectory, match);
+					let baseName = path.basename(filePath);
+
+					if (!existsSync(filePath)) {
+						return;
+					}
+
+					if (filePath.endsWith(".code-snippets")) {
+						baseName += ".json";
+					} else if (filePath.endsWith(".html")) {
+						copyFileSync(filePath, path.join(assetsDirectory, baseName));
+
+						return "\"/dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
+					} else if (filePath.endsWith(".json")) {
+						writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" }))));
+					} else if (filePath.endsWith(".mp3")) {
+						return "\"data:audio/mpeg;base64,\"";
+					}
+
+					// All of this naming logic can go.
+					const validIdentifier = "__" + baseName.replace(/(?:\p{Pd}|\p{Ps}|\p{Pe}|\p{Po}|\s)+(.)/gu, function(_, match) {
+						return match.toUpperCase();
+					});
+
+					for (let x = 0, importName = validIdentifier; ; x++, importName = validIdentifier + "$" + x) {
+						if (imports[importName] === undefined || imports[validIdentifier] === filePath) {
+							// Caching opportunity here:
+							const file = readFileSync(filePath);
+
+							try {
+								// If it's JSON-like
+								JSON.parse(file.toString("utf8"));
+
+								const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
+
+								const extension = path.extname(baseName);
+								baseName = path.basename(baseName, extension);
+	
+								baseName = baseName + "-" + hash + extension;
+	
+								console.log("Manually copying " + baseName);
+
+								copyFileSync(filePath, path.join(assetsDirectory, baseName));
+	
+								//imports[importName] = path.relative(path.dirname(filePath), path.join(assetsDirectory, baseName));
+	
+								return "\"./dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
+							} catch (error) {
+								// Otherwise, leave it unchanged.
+								return "\"" + match + "\"";
+							}
+						}
+					}
+				});
+
 				return {
-					"contents": contents.replace(newUrlRegEx, function(_, match) {
-						const filePath = path.join(parentDirectory, match);
-
-						if (!existsSync(filePath)) {
-							return;
-						}
-
-						if (filePath.endsWith(".json")) {
-							writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" }))));
-						} else if (filePath.endsWith(".mp3")) {
-							return "\"data:audio/mpeg;base64,\"";
-						}
-
-						copyFileSync(filePath, path.join(assetsDirectory, path.basename(filePath)));
-
-						return "\"/dist/assets/" + path.basename(filePath).replace(/\\/gu, "/") + "\"";
-					}),
+					"contents": contents,
 					"loader": path.extname(filePath).substring(1)
 				};
 			}
@@ -236,6 +279,9 @@ export default defineConfig({
 	"external": [
 		"fonts"
 	],
-	"format": "esm",
+	"loader": {
+		".map": "empty",
+		".svg": "dataurl"
+	},
 	"treeshake": true
 });
