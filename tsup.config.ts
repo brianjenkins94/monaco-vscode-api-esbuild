@@ -46,6 +46,10 @@ const importMetaUrlPlugin = {
 					let filePath = path.join(parentDirectory, match);
 					let baseName = path.basename(filePath);
 
+					if (filePath.includes("(JavaScript).tmLanguage")) {
+						console.log();
+					}
+
 					if (!existsSync(filePath)) {
 						const fallbackPath = path.join(__dirname, "monaco", "demo", "node_modules", match);
 
@@ -62,7 +66,7 @@ const importMetaUrlPlugin = {
 
 					if (filePath.endsWith(".code-snippets")) {
 						baseName += ".json";
-					} else if (filePath.endsWith(".html")) {
+					} else if (filePath.endsWith(".html") || filePath.endsWith(".tmLanguage")) {
 						copyFileSync(filePath, path.join(assetsDirectory, baseName));
 
 						return "\"/dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
@@ -74,19 +78,19 @@ const importMetaUrlPlugin = {
 						return "\"data:audio/mpeg;base64,\"";
 					}
 
-					// Caching opportunity here:
-					const file = readFileSync(filePath);
-
-					const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
-
-					const extension = path.extname(baseName);
-					baseName = path.basename(baseName, extension);
-
-					baseName = baseName + "-" + hash + extension;
-
 					try {
+						// Caching opportunity here:
+						const file = readFileSync(filePath);
+
 						// If it's JSON-like
 						JSON.parse(file.toString("utf8"));
+
+						const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
+
+						const extension = path.extname(baseName);
+						baseName = path.basename(baseName, extension);
+
+						baseName = baseName + "-" + hash + extension;
 
 						// Copy it to the assets directory
 						copyFileSync(filePath, path.join(assetsDirectory, baseName));
