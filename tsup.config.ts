@@ -42,8 +42,6 @@ const importMetaUrlPlugin = {
 			const parentDirectory = path.dirname(filePath);
 
 			if (newUrlRegEx.test(contents)) {
-				const imports = {};
-
 				contents = contents.replace(newUrlRegEx, function(_, match) {
 					let filePath = path.join(parentDirectory, match);
 					let baseName = path.basename(filePath);
@@ -57,16 +55,6 @@ const importMetaUrlPlugin = {
 							match = "./dist/assets/" + baseName;
 
 							copyFileSync(filePath, path.join(assetsDirectory, baseName));
-
-							/*
-							const validIdentifier = "__" + baseName.replace(/(?:\p{Pd}|\p{Ps}|\p{Pe}|\p{Po}|\s)+(.)/gu, function(_, match) {
-								return match.toUpperCase();
-							});
-
-							imports[validIdentifier] = filePath;
-
-							return validIdentifier;
-							*/
 						} else {
 							return;
 						}
@@ -86,46 +74,33 @@ const importMetaUrlPlugin = {
 						return "\"data:audio/mpeg;base64,\"";
 					}
 
-					const validIdentifier = "__" + baseName.replace(/(?:\p{Pd}|\p{Ps}|\p{Pe}|\p{Po}|\s)+(.)/gu, function(_, match) {
-						return match.toUpperCase();
-					});
+					// Caching opportunity here:
+					const file = readFileSync(filePath);
 
-					for (let x = 0, importName = validIdentifier; ; x++, importName = validIdentifier + "$" + x) {
-						if (imports[importName] === undefined || imports[validIdentifier] === filePath) {
-							// Caching opportunity here:
-							const file = readFileSync(filePath);
+					const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
 
-							const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
+					const extension = path.extname(baseName);
+					baseName = path.basename(baseName, extension);
 
-							const extension = path.extname(baseName);
-							baseName = path.basename(baseName, extension);
+					baseName = baseName + "-" + hash + extension;
 
-							baseName = baseName + "-" + hash + extension;
+					try {
+						// If it's JSON-like
+						JSON.parse(file.toString("utf8"));
 
-							try {
-								// If it's JSON-like
-								JSON.parse(file.toString("utf8"));
+						// Copy it to the assets directory
+						copyFileSync(filePath, path.join(assetsDirectory, baseName));
 
-								// Copy it to the assets directory
-								copyFileSync(filePath, path.join(assetsDirectory, baseName));
-
-								// So that we can refer to it by its unique name.
-								return "\"./dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
-							} catch (error) {
-								// Otherwise, leave it unchanged.
-								return "\"" + match + "\"";
-							}
-						}
+						// So that we can refer to it by its unique name.
+						return "\"./dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
+					} catch (error) {
+						// Otherwise, leave it unchanged.
+						return "\"" + match + "\"";
 					}
 				});
 
 				return {
-					"contents": [
-						...Object.entries(imports).map(function([name, filePath]) {
-							return "import " + name + " from \"" + filePath + "\";";
-						}),
-						contents
-					].join("\n"),
+					"contents": contents,
 					"loader": path.extname(filePath).substring(1)
 				};
 			}
