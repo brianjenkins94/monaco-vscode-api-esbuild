@@ -1,0 +1,56 @@
+{
+	"name": "ci",
+	"on": {
+		"push": {
+			"branches": ["main"]
+		}
+	},
+	"permissions": {
+		"contents": "read",
+		"pages": "write",
+		"id-token": "write"
+	},
+	"jobs": {
+		"cache": {
+			"runs-on": "ubuntu-latest",
+			"steps": [
+				{ "uses": "actions/checkout@v3", "with": { "ref": "main" } },
+				{ "uses": "actions/setup-node@v3", "with": { "node-version": 20 } },
+				{ "uses": "bahmutov/npm-install@v1", "with": { "useLockFile": false } }
+			],
+			"timeout-minutes": 15
+		},
+		"build": {
+			"runs-on": "ubuntu-latest",
+			"needs": ["cache"]
+			"steps": [
+				{ "uses": "actions/checkout@v3", "with": { "ref": "main" } },
+				{ "uses": "actions/setup-node@v3", "with": { "node-version": 20 } },
+				{ "uses": "bahmutov/npm-install@v1", "with": { "useLockFile": false } },
+				{ "run": "npm run build" },
+				{
+					"uses": "actions/upload-pages-artifact@v1",
+					"with": {
+						"path": "./apps/web/out"
+					}
+				}
+			],
+			"timeout-minutes": 15
+		},
+		"deploy": {
+			"environment": {
+				"name": "github-pages",
+				"url": "${{ steps.deployment.outputs.page_url }}"
+			},
+			"runs-on": "ubuntu-latest",
+			"needs": ["build"],
+			"steps": [
+				{
+					"id": "deployment",
+					"uses": "actions/deploy-pages@v1"
+				}
+			],
+			"timeout-minutes": 15
+		}
+	}
+}

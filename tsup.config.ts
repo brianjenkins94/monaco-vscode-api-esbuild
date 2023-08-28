@@ -56,7 +56,7 @@ const importMetaUrlPlugin = {
 						if (existsSync(fallbackPath)) {
 							filePath = fallbackPath;
 							baseName = path.basename(filePath);
-							match = "./dist/assets/" + baseName;
+							match = "./assets/" + baseName;
 
 							copyFileSync(filePath, path.join(assetsDirectory, baseName));
 						} else {
@@ -69,7 +69,7 @@ const importMetaUrlPlugin = {
 					} else if (filePath.endsWith(".html") || filePath.endsWith(".tmLanguage")) {
 						copyFileSync(filePath, path.join(assetsDirectory, baseName));
 
-						return "\"/dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
+						return "\"./assets/" + baseName.replace(/\\/gu, "/") + "\"";
 					} else if (filePath.endsWith(".js")) {
 						return "\"" + match + "\"";
 					} else if (filePath.endsWith(".json")) {
@@ -96,7 +96,7 @@ const importMetaUrlPlugin = {
 						copyFileSync(filePath, path.join(assetsDirectory, baseName));
 
 						// So that we can refer to it by its unique name.
-						return "\"./dist/assets/" + baseName.replace(/\\/gu, "/") + "\"";
+						return "\"./assets/" + baseName.replace(/\\/gu, "/") + "\"";
 					} catch (error) {
 						// Otherwise, leave it unchanged.
 						return "\"" + match + "\"";
@@ -269,7 +269,7 @@ export default defineConfig({
 					return {
 						"contents": `
 							export default function() {
-								return new Worker("/dist/${path.basename(workerPath, path.extname(workerPath)) + ".js"}", { "type": "module" });
+								return new Worker("./${path.basename(workerPath, path.extname(workerPath)) + ".js"}", { "type": "module" });
 							}
 						`,
 						"loader": "js"
