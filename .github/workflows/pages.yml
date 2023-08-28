@@ -22,7 +22,7 @@
 		},
 		"build": {
 			"runs-on": "ubuntu-latest",
-			"needs": ["cache"]
+			"needs": ["cache"],
 			"steps": [
 				{ "uses": "actions/checkout@v3", "with": { "ref": "main" } },
 				{ "uses": "actions/setup-node@v3", "with": { "node-version": 20 } },
