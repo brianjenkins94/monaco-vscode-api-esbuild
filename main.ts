@@ -1,11 +1,12 @@
-import "./monaco/demo/src/style.css";
+// SOURCE: https://github.com/CodinGame/monaco-vscode-api/blob/main/demo/src/main.ts
+
 import * as monaco from "monaco-editor";
 import { createConfiguredEditor, createModelReference } from "vscode/monaco";
 import { HTMLFileSystemProvider, registerFileSystemOverlay } from "vscode/service-override/files";
 import * as vscode from "vscode";
-import { IDialogService, IEditorService, ILogService, IPreferencesService, StandaloneServices } from "vscode/services";
-import { ConfirmResult } from "vscode/service-override/views";
-import "./monaco/demo/src/setup";
+import { IDialogService, IEditorService, ILogService, IPreferencesService, StandaloneServices, getService } from "vscode/services";
+import { ConfirmResult, Parts, isPartVisibile, setPartVisibility } from "vscode/service-override/views";
+import { clearStorage } from "./monaco/demo/src/setup";
 import { CustomEditorInput } from "./monaco/demo/src/features/customView";
 //import "./monaco/demo/src/features/debugger";
 import "./monaco/demo/src/features/search";
@@ -15,36 +16,36 @@ import "./monaco/demo/src/features/intellisense";
 import "./monaco/demo/src/features/notifications";
 import "./monaco/demo/src/features/terminal";
 
-import "vscode/default-extensions/clojure";
-import "vscode/default-extensions/coffeescript";
-import "vscode/default-extensions/cpp";
-import "vscode/default-extensions/csharp";
+//import "vscode/default-extensions/clojure";
+//import "vscode/default-extensions/coffeescript";
+//import "vscode/default-extensions/cpp";
+//import "vscode/default-extensions/csharp";
 import "vscode/default-extensions/css";
 import "vscode/default-extensions/diff";
-import "vscode/default-extensions/fsharp";
-import "vscode/default-extensions/go";
-import "vscode/default-extensions/groovy";
+//import "vscode/default-extensions/fsharp";
+//import "vscode/default-extensions/go";
+//import "vscode/default-extensions/groovy";
 import "vscode/default-extensions/html";
-import "vscode/default-extensions/java";
+//import "vscode/default-extensions/java";
 import "vscode/default-extensions/javascript";
 import "vscode/default-extensions/json";
-import "vscode/default-extensions/julia";
-import "vscode/default-extensions/lua";
+//import "vscode/default-extensions/julia";
+//import "vscode/default-extensions/lua";
 import "vscode/default-extensions/markdown-basics";
-import "vscode/default-extensions/objective-c";
-import "vscode/default-extensions/perl";
-import "vscode/default-extensions/php";
-import "vscode/default-extensions/powershell";
-import "vscode/default-extensions/python";
-import "vscode/default-extensions/r";
-import "vscode/default-extensions/ruby";
-import "vscode/default-extensions/rust";
+//import "vscode/default-extensions/objective-c";
+//import "vscode/default-extensions/perl";
+//import "vscode/default-extensions/php";
+//import "vscode/default-extensions/powershell";
+//import "vscode/default-extensions/python";
+//import "vscode/default-extensions/r";
+//import "vscode/default-extensions/ruby";
+//import "vscode/default-extensions/rust";
 import "vscode/default-extensions/scss";
 import "vscode/default-extensions/shellscript";
-import "vscode/default-extensions/sql";
-import "vscode/default-extensions/swift";
+//import "vscode/default-extensions/sql";
+//import "vscode/default-extensions/swift";
 import "vscode/default-extensions/typescript-basics";
-import "vscode/default-extensions/vb";
+//import "vscode/default-extensions/vb";
 import "vscode/default-extensions/xml";
 import "vscode/default-extensions/yaml";
 
@@ -114,9 +115,21 @@ const settingsModelReference = await createModelReference(monaco.Uri.from({ "sch
   "terminal.integrated.tabs.title": "\${sequence}",
   "typescript.tsserver.log": "normal"
 }`);
-createConfiguredEditor(document.getElementById("settings-editor")!, {
+const settingEditor = createConfiguredEditor(document.getElementById("settings-editor")!, {
 	"model": settingsModelReference.object.textEditorModel,
 	"automaticLayout": true
+});
+
+settingEditor.addAction({
+	"id": "custom-action",
+	"run": async function() {
+		void (await getService(IDialogService)).info("Custom action executed!");
+	},
+	"label": "Custom action visible in the command palette",
+	"keybindings": [
+		monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK
+	],
+	"contextMenuGroupId": "custom"
 });
 
 const keybindingsModelReference = await createModelReference(monaco.Uri.from({ "scheme": "user", "path": "/keybindings.json" }), `[
@@ -140,6 +153,14 @@ document.querySelector("#filesystem")!.addEventListener("click", async () => {
 
 	vscode.workspace.updateWorkspaceFolders(0, 0, {
 		"uri": vscode.Uri.file(dirHandle.name)
+	});
+});
+
+document.querySelector("#run")!.addEventListener("click", () => {
+	vscode.debug.startDebugging(undefined, {
+		"name": "Test",
+		"request": "attach",
+		"type": "javascript"
 	});
 });
 
@@ -180,4 +201,16 @@ document.querySelector("#customEditorPanel")!.addEventListener("click", async ()
 	await StandaloneServices.get(IEditorService).openEditor(input, {
 		"pinned": true
 	});
+});
+
+document.querySelector("#clearStorage")!.addEventListener("click", async () => {
+	await clearStorage();
+});
+
+document.querySelector("#togglePanel")!.addEventListener("click", async () => {
+	setPartVisibility(Parts.PANEL_PART, !isPartVisibile(Parts.PANEL_PART));
+});
+
+document.querySelector("#toggleAuxiliary")!.addEventListener("click", async () => {
+	setPartVisibility(Parts.AUXILIARYBAR_PART, !isPartVisibile(Parts.AUXILIARYBAR_PART));
 });

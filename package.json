@@ -6,10 +6,10 @@
   "author": "Brian Jenkins",
   "license": "MIT",
   "scripts": {
-    "build": "tsup --format esm --treeshake --outDir dist/",
+    "build": "tsup --format esm --treeshake --outDir docs/",
     "postinstall": "./checkout-monaco.sh",
     "serve": "npx http-server",
-    "start": "npm run serve"
+    "start": "npm run serve docs/"
   },
   "devDependencies": {
     "@tsconfig/node-lts": "latest",
