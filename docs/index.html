@@ -18,17 +18,13 @@
 
 	<!-- Inline Stylesheet -->
 	<style>
-		body {
-			height: 100vh;
-			width: 100vw;
-		}
-
-		.container {
+		body {	
 			display: flex;
-
-			/* Misc */
-			border: 1px solid #cbd5e0;
+			flex-direction: column;
+			height: 100vh;
+			overflow-x: hidden;
 		}
+
 		.resizer[data-direction='horizontal'] {
 			background-color: #cbd5e0;
 			cursor: ew-resize;
@@ -42,49 +38,72 @@
 			width: 100%;
 		}
 
-		#editor {
-			height: 100%;
+		
+		main {
+			display: flex;
+			flex-grow: 1;
 			width: 100%;
 		}
-
-		.container__left {
+		nav {
 			display: flex;
-			width: 12.5%;
+			
+			/* Misc */
+			background-color: red;
 		}
-		.container__right {
-			flex: 1;
+		section {
+			display: flex;
+			flex-direction: column;
+			width: 100%;
 		}
-		.container__top {
-			height: 75vh;
+		#editor {
+			height: 50%;
+			
+			/* Misc */
+			background-color: orange;
 		}
-		.container__bottom {
-			flex: 1;
+		#editors {
+			height: 100%;
 		}
+		#panel {
+			flex-grow: 1;
+			
+			/* Misc */
+			background-color: yellow;
+		}
+		#panels {
+			height: 100%;
+		}
+		footer {}
+  
 	</style>
 </head>
 <body>
-	<main class="container">
-		<div class="container__left">
+	<main>
+		<nav>
 			<div id="activityBar"></div>
 			<div id="sidebar"></div>
-		</div>
+		</nav>
+
 		<div class="resizer" data-direction="horizontal"></div>
-		<div class="container__right">
+
+		<section>
 			<div id="editor" class="container__top">
 				<div id="editors"></div>
-			</div>	
-			<div class="resizer" data-direction="vertical"></div>
-			<div class="container__bottom">
-				<div id="panel"></div>
 			</div>
-		</div>
+
+			<div class="resizer" data-direction="vertical"></div>
+
+			<div id="panel">
+				<div id="panels"></div>
+			</div>
+		</section>
 	</main>
 
 	<footer>
 		<div id="statusBar"></div>
 	</footer>
 
-  <script type="module" src="main.js"></script>
+	<script type="module" src="main.js"></script>
 
 	<script>
 		function resizable(resizer) {
