@@ -29,12 +29,12 @@
 			background-color: #cbd5e0;
 			cursor: ew-resize;
 			height: 100%;
-			width: 2px;
+			/* width: 2px; */
 		}
 		.resizer[data-direction='vertical'] {
 			background-color: #cbd5e0;
 			cursor: ns-resize;
-			height: 2px;
+			/* height: 2px; */
 			width: 100%;
 		}
 
@@ -42,38 +42,31 @@
 		main {
 			display: flex;
 			flex-grow: 1;
-			width: 100%;
 		}
 		nav {
 			display: flex;
-			
-			/* Misc */
-			background-color: red;
+			min-width: 12.5%;
+		}
+		#sidebar {
+			flex-grow: 1;
 		}
 		section {
 			display: flex;
 			flex-direction: column;
-			width: 100%;
+			flex-grow: 1;
 		}
 		#editor {
-			height: 50%;
-			
-			/* Misc */
-			background-color: orange;
+			height: 75%;
 		}
 		#editors {
 			height: 100%;
 		}
 		#panel {
 			flex-grow: 1;
-			
-			/* Misc */
-			background-color: yellow;
 		}
 		#panels {
 			height: 100%;
 		}
-		footer {}
   
 	</style>
 </head>
