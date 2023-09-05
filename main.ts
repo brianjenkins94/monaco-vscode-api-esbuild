@@ -4,10 +4,14 @@ import * as monaco from "monaco-editor";
 import { createConfiguredEditor, createModelReference } from "vscode/monaco";
 import { HTMLFileSystemProvider, registerFileSystemOverlay } from "vscode/service-override/files";
 import * as vscode from "vscode";
-import { IDialogService, IEditorService, ILogService, IPreferencesService, StandaloneServices, getService } from "vscode/services";
-import { ConfirmResult, Parts, isPartVisibile, setPartVisibility } from "vscode/service-override/views";
-import { clearStorage } from "./monaco/demo/src/setup";
-import { CustomEditorInput } from "./monaco/demo/src/features/customView";
+import { IDialogService, ILogService, StandaloneServices, getService } from "vscode/services";
+
+// setup.ts
+
+import "./setup";
+
+// </>
+
 //import "./monaco/demo/src/features/debugger";
 import "./monaco/demo/src/features/search";
 import { anotherFakeOutputChannel } from "./monaco/demo/src/features/output";
@@ -162,55 +166,4 @@ document.querySelector("#run")!.addEventListener("click", () => {
 		"request": "attach",
 		"type": "javascript"
 	});
-});
-
-document.querySelector("#settingsui")!.addEventListener("click", async () => {
-	await StandaloneServices.get(IPreferencesService).openUserSettings();
-	window.scrollTo({ "top": 0, "behavior": "smooth" });
-});
-
-document.querySelector("#keybindingsui")!.addEventListener("click", async () => {
-	await StandaloneServices.get(IPreferencesService).openGlobalKeybindingSettings(false);
-	window.scrollTo({ "top": 0, "behavior": "smooth" });
-});
-
-document.querySelector("#customEditorPanel")!.addEventListener("click", async () => {
-	const input = new CustomEditorInput({
-		"confirm": async function() {
-			const { confirmed } = await StandaloneServices.get(IDialogService).confirm({
-				"message": "Are you sure you want to close this INCREDIBLE editor pane?"
-			});
-			return confirmed ? ConfirmResult.DONT_SAVE : ConfirmResult.CANCEL;
-		},
-		"showConfirm": function() {
-			return true;
-		}
-	});
-	let toggle = false;
-	const interval = window.setInterval(() => {
-		const title = toggle ? "Awesome editor pane" : "Incredible editor pane";
-		input.setTitle(title);
-		input.setName(title);
-		input.setDescription(title);
-		toggle = !toggle;
-	}, 1000);
-	input.onWillDispose(() => {
-		window.clearInterval(interval);
-	});
-
-	await StandaloneServices.get(IEditorService).openEditor(input, {
-		"pinned": true
-	});
-});
-
-document.querySelector("#clearStorage")!.addEventListener("click", async () => {
-	await clearStorage();
-});
-
-document.querySelector("#togglePanel")!.addEventListener("click", async () => {
-	setPartVisibility(Parts.PANEL_PART, !isPartVisibile(Parts.PANEL_PART));
-});
-
-document.querySelector("#toggleAuxiliary")!.addEventListener("click", async () => {
-	setPartVisibility(Parts.AUXILIARYBAR_PART, !isPartVisibile(Parts.AUXILIARYBAR_PART));
 });

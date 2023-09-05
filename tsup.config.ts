@@ -46,10 +46,6 @@ const importMetaUrlPlugin = {
 					let filePath = path.join(parentDirectory, match);
 					let baseName = path.basename(filePath);
 
-					if (filePath.includes("(JavaScript).tmLanguage")) {
-						console.log();
-					}
-
 					if (!existsSync(filePath)) {
 						const fallbackPath = path.join(__dirname, "monaco", "demo", "node_modules", match);
 
@@ -64,18 +60,25 @@ const importMetaUrlPlugin = {
 						}
 					}
 
-					if (filePath.endsWith(".code-snippets")) {
-						baseName += ".json";
-					} else if (filePath.endsWith(".html") || filePath.endsWith(".tmLanguage")) {
-						copyFileSync(filePath, path.join(assetsDirectory, baseName));
+					switch (true) {
+						case filePath.endsWith(".code-snippets"):
+							baseName += ".json";
+							break;
+						case filePath.endsWith(".js"):
+						case filePath.endsWith(".map"):
+							return "\"" + match + "\"";
+						case filePath.endsWith(".json"):
+							writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" }))));
+							break;
+						case filePath.endsWith(".mp3"):
+							return "\"data:audio/mpeg;base64,\"";
+						case filePath.endsWith(".html"):
+						case filePath.endsWith(".tmLanguage"):
+						case filePath.endsWith(".woff"):
+							copyFileSync(filePath, path.join(assetsDirectory, baseName));
 
-						return "\"./assets/" + baseName.replace(/\\/gu, "/") + "\"";
-					} else if (filePath.endsWith(".js")) {
-						return "\"" + match + "\"";
-					} else if (filePath.endsWith(".json")) {
-						writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" }))));
-					} else if (filePath.endsWith(".mp3")) {
-						return "\"data:audio/mpeg;base64,\"";
+							return "\"./assets/" + baseName + "\"";
+						default:
 					}
 
 					try {
@@ -96,7 +99,7 @@ const importMetaUrlPlugin = {
 						copyFileSync(filePath, path.join(assetsDirectory, baseName));
 
 						// So that we can refer to it by its unique name.
-						return "\"./assets/" + baseName.replace(/\\/gu, "/") + "\"";
+						return "\"./assets/" + baseName + "\"";
 					} catch (error) {
 						// Otherwise, leave it unchanged.
 						return "\"" + match + "\"";
@@ -217,12 +220,7 @@ await fs.mkdir(assetsDirectory, { "recursive": true });
 const entry = {
 	"main": "main.ts",
 	...await manualChunks({
-		"monaco": [
-			"monaco-editor/esm/vs/editor/editor.api.js",
-			"./monaco/demo/src/setup.ts",
-			"vscode/dist/extensions.js",
-			"vscode/dist/default-extensions"
-		],
+		"monaco": ["./monaco/demo/"],
 		...workers
 	})
 };
@@ -236,32 +234,15 @@ export default defineConfig({
 		{
 			"name": "resolve-worker",
 			"setup": function(build) {
-				// This can be removed after we figure out if we need `toCrossOriginWorker` or `toWorkerConfig`.
-				build.onLoad({ "filter": /tools(?:\/|\\)workers\.ts$/u }, function(args) {
-					return {
-						"contents": `
-							export function toCrossOriginWorker(worker) {
-								return worker;
-							}
-							export function toWorkerConfig(worker) {
-								return worker;
-							}
-						`,
-						"loader": "ts"
-					};
-				});
-
 				build.onResolve({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": filePath, importer }) {
 					if (filePath.startsWith(".")) {
 						return;
 					}
 
 					const baseName = path.basename(filePath.replace(/\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u, ".worker"));
-					//filePath = importer.endsWith("setup.ts") ? "./" + baseName + ".js" : path.join(__dirname, "monaco", "demo", "node_modules", filePath);
 
 					return {
 						"path": path.join(__dirname, "chunks", baseName + ".ts")
-						//"external": importer.endsWith("setup.ts")
 					};
 				});
 
