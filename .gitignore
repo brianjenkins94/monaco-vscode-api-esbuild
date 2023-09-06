@@ -606,7 +606,7 @@ FodyWeavers.xsd
 package-lock.json
 
 # monaco
-/monaco
+/monaco-vscode-api
 
 # intermediate build output
 /chunks

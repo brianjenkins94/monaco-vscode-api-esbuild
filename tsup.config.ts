@@ -47,7 +47,7 @@ const importMetaUrlPlugin = {
 					let baseName = path.basename(filePath);
 
 					if (!existsSync(filePath)) {
-						const fallbackPath = path.join(__dirname, "monaco", "demo", "node_modules", match);
+						const fallbackPath = path.join(__dirname, "monaco-vscode-api", "demo", "node_modules", match);
 
 						if (existsSync(fallbackPath)) {
 							filePath = fallbackPath;
@@ -220,7 +220,7 @@ await fs.mkdir(assetsDirectory, { "recursive": true });
 const entry = {
 	"main": "main.ts",
 	...await manualChunks({
-		"monaco": ["./monaco/demo/"],
+		"monaco": ["./monaco-vscode-api/demo/"],
 		...workers
 	})
 };

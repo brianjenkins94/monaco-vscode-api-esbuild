@@ -1,54 +1,34 @@
-// SOURCE: https://github.com/CodinGame/monaco-vscode-api/blob/main/demo/src/main.ts
+import { createModelReference, monaco, vscode } from "./monaco";
 
-import "./before";
+const modelRef = await createModelReference(monaco.Uri.file("/tmp/test.js"), `// import anotherfile
+let variable = 1
+function inc () {
+	variable++
+}
 
-//import "./monaco/demo/src/features/debugger";
-import "./monaco/demo/src/features/search";
-import "./monaco/demo/src/features/filesystem";
-import "./monaco/demo/src/features/intellisense";
-import "./monaco/demo/src/features/notifications";
-import "./monaco/demo/src/features/terminal";
+while (variable < 5000) {
+	inc()
+	console.log('Hello world', variable);
+}`);
 
-//import "vscode/default-extensions/clojure";
-//import "vscode/default-extensions/coffeescript";
-//import "vscode/default-extensions/cpp";
-//import "vscode/default-extensions/csharp";
-import "vscode/default-extensions/css";
-import "vscode/default-extensions/diff";
-//import "vscode/default-extensions/fsharp";
-//import "vscode/default-extensions/go";
-//import "vscode/default-extensions/groovy";
-import "vscode/default-extensions/html";
-//import "vscode/default-extensions/java";
-import "vscode/default-extensions/javascript";
-import "vscode/default-extensions/json";
-//import "vscode/default-extensions/julia";
-//import "vscode/default-extensions/lua";
-import "vscode/default-extensions/markdown-basics";
-//import "vscode/default-extensions/objective-c";
-//import "vscode/default-extensions/perl";
-//import "vscode/default-extensions/php";
-//import "vscode/default-extensions/powershell";
-//import "vscode/default-extensions/python";
-//import "vscode/default-extensions/r";
-//import "vscode/default-extensions/ruby";
-//import "vscode/default-extensions/rust";
-import "vscode/default-extensions/scss";
-import "vscode/default-extensions/shellscript";
-//import "vscode/default-extensions/sql";
-//import "vscode/default-extensions/swift";
-import "vscode/default-extensions/typescript-basics";
-//import "vscode/default-extensions/vb";
-import "vscode/default-extensions/xml";
-import "vscode/default-extensions/yaml";
+const [mainDocument] = await Promise.all([
+	vscode.workspace.openTextDocument(modelRef.object.textEditorModel.uri),
+	//vscode.workspace.openTextDocument(monaco.Uri.file("/tmp/test_readonly.js")) // open the file so vscode sees it's locked
+]);
+await vscode.window.showTextDocument(mainDocument, {
+	"preview": false
+});
 
-import "vscode/default-extensions/theme-defaults";
-import "vscode/default-extensions/theme-seti";
-import "vscode/default-extensions/references-view";
-import "vscode/default-extensions/search-result";
-import "vscode/default-extensions/configuration-editing";
-//import "vscode/default-extensions/markdown-math";
-import "vscode/default-extensions/npm";
-//import "vscode/default-extensions/media-preview";
+const diagnostics = vscode.languages.createDiagnosticCollection("demo");
+diagnostics.set(modelRef.object.textEditorModel.uri, [{
+	"range": new vscode.Range(2, 9, 2, 12),
+	"severity": vscode.DiagnosticSeverity.Error,
+	"message": "This is not a real error, just a demo, don't worry",
+	"source": "Demo",
+	"code": 42
+}]);
 
-import "./after";
+await createModelReference(monaco.Uri.from({ "scheme": "user", "path": "/settings.json" }), JSON.stringify({
+	"workbench.colorTheme": "Default Light+",
+	"editor.fontSize": 14
+}, undefined, "\t"));
