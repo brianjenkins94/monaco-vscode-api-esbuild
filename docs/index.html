@@ -20,19 +20,19 @@
 	<style>
 		body {
 			height: 100vh;
+			overflow: hidden;
 		}
 
 		body > main {
 			display: grid;
 			height: 100%;
 			grid-template:
-				/* "header       header         header         header         header"         min-content */
-				"sidebar      sidebar-handle editors        auxbar-handle  auxbar"         auto
+				"header       header         header         header         header"         min-content
+				"sidebar      sidebar-handle editors        auxbar-handle  auxbar"         2fr
 				"sidebar      sidebar-handle console-handle console-handle console-handle" 2px
-				"sidebar      sidebar-handle console        console        console"        min-content
-				/* "footer       footer         footer         footer         footer"         min-content */
-				/ min-content 2px            auto           2px            min-content;
-			overflow: hidden;
+				"sidebar      sidebar-handle console        console        console"        1fr
+				"footer       footer         footer         footer         footer"         min-content
+				/ 1fr         2px            3fr            2px            1fr;
 		}
 
 		body > main > header {
@@ -62,7 +62,6 @@
 		}
 		.sidebar-control > .region {
 			grid-area: sidebar / sidebar / sidebar-handle / sidebar-handle;
-			width: 240px;
 			min-width: 100%;
 			overflow: hidden;
 			resize: horizontal;
@@ -91,7 +90,6 @@
 		}
 		.console-control > .region {
 			grid-area: console-handle / console-handle / console / console;
-			height: 240px;
 			min-height: 100%;
 			overflow: hidden;
 			resize: vertical;
@@ -110,7 +108,6 @@
 		}
 		.auxbar-control > .region {
 			grid-area: auxbar-handle / auxbar-handle / auxbar / auxbar;
-			width: 240px;
 			min-width: 100%;
 			overflow: hidden;
 			resize: horizontal;
@@ -138,9 +135,9 @@
 </head>
 <body>
 	<main>
-		<!-- <header>
+		<header>
 			<div></div>
-		</header> -->
+		</header>
 
 		<nav id="sidebar"></nav>
 
@@ -164,11 +161,11 @@
 			<div class="region"></div>
 			<div class="handle"></div>
 		</div>
-	</main>
 
-	<footer>
-		<div id="statusBar"></div>
-	</footer>
+		<footer>
+			<div id="statusBar"></div>
+		</footer>
+	</main>
 
 	<script type="module" src="main.js"></script>
 
