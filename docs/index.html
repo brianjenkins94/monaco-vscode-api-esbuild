@@ -28,11 +28,10 @@
 			grid-template:
 				/* "header       header         header         header         header"         min-content */
 				"sidebar      sidebar-handle editors        auxbar-handle  auxbar"         auto
-				"sidebar      sidebar-handle editors        auxbar-handle  auxbar"         10px
-				"sidebar      sidebar-handle console-handle console-handle console-handle" 10px
+				"sidebar      sidebar-handle console-handle console-handle console-handle" 2px
 				"sidebar      sidebar-handle console        console        console"        min-content
 				/* "footer       footer         footer         footer         footer"         min-content */
-				/ min-content 10px           auto           10px           min-content;
+				/ min-content 2px            auto           2px            min-content;
 			overflow: hidden;
 		}
 
@@ -52,12 +51,14 @@
 		}
 		.sidebar-control > .handle, .console-control > .handle, .auxbar-control > .handle {
 			grid-area: sidebar-handle;
-			background: red;
+			background: #d4d4d4;
 			z-index: 1;
 			pointer-events: none;
 		}
 		.sidebar-control:hover > .handle, .console-control:hover > .handle, .auxbar-control:hover > .handle {
-			background: pink;
+			background: #0090f1;
+			width: 4px;
+			transition: width 1s;
 		}
 		.sidebar-control > .region {
 			grid-area: sidebar / sidebar / sidebar-handle / sidebar-handle;
@@ -81,6 +82,12 @@
 
 		.console-control > .handle {
 			grid-area: console-handle;
+		}
+		.console-control:hover > .handle {
+			grid-area: console-handle;
+			height: 4px;
+			transition: height 1s;
+			width: 100%;
 		}
 		.console-control > .region {
 			grid-area: console-handle / console-handle / console / console;
@@ -118,6 +125,9 @@
 
 		[id^="workbench\.parts\."] {
 			height: 100%;
+		}
+		[id^="workbench\.parts\."] > .composite.title {
+			border: none !important;
 		}
 		[id^="workbench\.parts\."] > .content {
 			height: 100% !important;
