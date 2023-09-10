@@ -47,6 +47,7 @@ let currentEditor: (monaco.IDisposable & {
 	modelRef: IReference<IResolvedTextEditorModel>;
 	editor: monaco.editor.IStandaloneCodeEditor;
 }) | null = null;
+
 const openNewCodeEditor: OpenEditor = async (modelRef) => {
 	if (currentEditor != null) {
 		currentEditor.dispose();
@@ -221,10 +222,11 @@ await initializeVscodeExtensions();
 
 for (const { part, element } of [
 	{ "part": Parts.SIDEBAR_PART, "element": "#sidebar" },
-	{ "part": Parts.ACTIVITYBAR_PART, "element": "#activityBar" },
-	{ "part": Parts.PANEL_PART, "element": "#panel" },
+	//{ "part": Parts.ACTIVITYBAR_PART, "element": "#activityBar" },
+	{ "part": Parts.PANEL_PART, "element": "#console" },
 	{ "part": Parts.EDITOR_PART, "element": "#editors" },
-	{ "part": Parts.STATUSBAR_PART, "element": "#statusBar" }
+	{ "part": Parts.STATUSBAR_PART, "element": "#statusBar" },
+	{ "part": Parts.AUXILIARYBAR_PART, "element": "#auxbar" }
 ]) {
 	const el = document.querySelector<HTMLDivElement>(element)!;
 
@@ -327,4 +329,8 @@ const fileSystemProvider = new RegisteredFileSystemProvider(false);
 
 registerFileSystemOverlay(1, fileSystemProvider);
 
-export { createModelReference, monaco, vscode };
+export {
+	createModelReference,
+	monaco,
+	vscode
+};
