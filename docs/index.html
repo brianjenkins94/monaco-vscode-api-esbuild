@@ -26,17 +26,25 @@
 			display: grid;
 			height: 100%;
 			grid-template:
-				"sidebar sidebar-handle editors auxbar-handle auxbar" auto
-				"sidebar sidebar-handle editors auxbar-handle auxbar" 10px
-				"sidebar sidebar-handle console-handle console-handle console-handle" 10px
-				"sidebar sidebar-handle console console console" min-content
-				/ min-content 10px auto 10px min-content;
+				/* "header       header         header         header         header"         min-content */
+				"sidebar      sidebar-handle editors        auxbar-handle  auxbar"         auto
+				"sidebar      sidebar-handle editors        auxbar-handle  auxbar"         10px
+				"sidebar      sidebar-handle console-handle console-handle console-handle" 10px
+				"sidebar      sidebar-handle console        console        console"        min-content
+				/* "footer       footer         footer         footer         footer"         min-content */
+				/ min-content 10px           auto           10px           min-content;
 			overflow: hidden;
+		}
+
+		body > main > header {
+			grid-area: header;
 		}
 
 		#sidebar {
 			grid-area: sidebar;
 			z-index: 1;
+			padding-left: 48px;
+			background-color: #2c2c2c;
 		}
 
 		.sidebar-control, .console-control, .auxbar-control {
@@ -104,6 +112,10 @@
 			translate: 100% 0;
 		}
 
+		body > main > footer {
+			grid-area: footer;
+		}
+
 		[id^="workbench\.parts\."] {
 			height: 100%;
 		}
@@ -116,26 +128,32 @@
 </head>
 <body>
 	<main>
+		<!-- <header>
+			<div></div>
+		</header> -->
+
+		<nav id="sidebar"></nav>
+
 		<div class="sidebar-control">
 			<div class="region"></div>
 			<div class="handle"></div>
 		</div>
-		<nav id="sidebar"></nav>
 
 		<section id="editors"></section>
+
+		<section id="console"></section>
 
 		<div class="console-control">
 			<div class="region"></div>
 			<div class="handle"></div>
 		</div>
-		<section id="console"></section>
 
+		<aside id="auxbar"></aside>
 
 		<div class="auxbar-control">
 			<div class="region"></div>
 			<div class="handle"></div>
 		</div>
-		<aside id="auxbar"></aside>
 	</main>
 
 	<footer>
