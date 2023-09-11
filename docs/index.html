@@ -29,10 +29,10 @@
 			grid-template:
 				"header       header         header         header         header"         min-content
 				"sidebar      sidebar-handle editors        auxbar-handle  auxbar"         2fr
-				"sidebar      sidebar-handle console-handle console-handle console-handle" 2px
+				"sidebar      sidebar-handle console-handle console-handle console-handle" 5px
 				"sidebar      sidebar-handle console        console        console"        1fr
 				"footer       footer         footer         footer         footer"         min-content
-				/ 1fr         2px            3fr            2px            1fr;
+				/ 1fr         5px            3fr            5px            1fr;
 		}
 
 		body > main > header {
@@ -51,14 +51,13 @@
 		}
 		.sidebar-control > .handle, .console-control > .handle, .auxbar-control > .handle {
 			grid-area: sidebar-handle;
-			background: #d4d4d4;
+			background-color: #ffffff;
 			z-index: 1;
 			pointer-events: none;
 		}
 		.sidebar-control:hover > .handle, .console-control:hover > .handle, .auxbar-control:hover > .handle {
-			background: #0090f1;
-			width: 4px;
-			transition: width 1s;
+			background-color: #0090f1;
+			transition: background-color 0.5s;
 		}
 		.sidebar-control > .region {
 			grid-area: sidebar / sidebar / sidebar-handle / sidebar-handle;
@@ -84,13 +83,14 @@
 		}
 		.console-control:hover > .handle {
 			grid-area: console-handle;
-			height: 4px;
-			transition: height 1s;
+			background-color: #0090f1;
+			transition: background-color 0.5s;
 			width: 100%;
 		}
 		.console-control > .region {
 			grid-area: console-handle / console-handle / console / console;
 			min-height: 100%;
+			max-height: 80vh;
 			overflow: hidden;
 			resize: vertical;
 			transform-origin: bottom right;
@@ -122,9 +122,6 @@
 
 		[id^="workbench\.parts\."] {
 			height: 100%;
-		}
-		[id^="workbench\.parts\."] > .composite.title {
-			border: none !important;
 		}
 		[id^="workbench\.parts\."] > .content {
 			height: 100% !important;
@@ -167,6 +164,10 @@
 		</footer>
 	</main>
 
+	<!-- Libraries -->
+	<script type="module" src="https://cdn.jsdelivr.net/npm/esbuild-wasm@0.19.2/lib/browser.min.js"></script>
+
+	<!-- Scripts -->
 	<script type="module" src="main.js"></script>
 
 </body>
