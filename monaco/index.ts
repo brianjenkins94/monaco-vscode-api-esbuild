@@ -330,7 +330,9 @@ const fileSystemProvider = new RegisteredFileSystemProvider(false);
 registerFileSystemOverlay(1, fileSystemProvider);
 
 export {
+	ExtensionHostKind,
 	createModelReference,
 	monaco,
+	registerExtension,
 	vscode
 };

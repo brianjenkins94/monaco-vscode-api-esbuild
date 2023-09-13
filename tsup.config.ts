@@ -68,7 +68,7 @@ const importMetaUrlPlugin = {
 						case filePath.endsWith(".map"):
 							return "\"" + match + "\"";
 						case filePath.endsWith(".json"):
-							writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" }))));
+							writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" })), undefined, "\t") + "\n");
 							break;
 						case filePath.endsWith(".mp3"):
 							return "\"data:audio/mpeg;base64,\"";

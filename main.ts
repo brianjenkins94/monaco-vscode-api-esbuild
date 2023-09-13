@@ -1,6 +1,8 @@
-import { createModelReference, monaco, vscode } from "./monaco";
+import { ExtensionHostKind, createModelReference, monaco, registerExtension, vscode } from "./monaco";
 
-//registerExtension(new URL("./extensions/hello-world/manifest.json", import.meta.url), async () => fileContent)
+const result = registerExtension(new URL("./extensions/hello-world/package.json", import.meta.url), ExtensionHostKind.LocalProcess);
+
+console.log(result);
 
 const modelReference = await createModelReference(monaco.Uri.file("/tmp/test.js"), `// import anotherfile
 let variable = 1
@@ -22,3 +24,10 @@ await vscode.window.showTextDocument(mainDocument, {
 await createModelReference(monaco.Uri.from({ "scheme": "user", "path": "/settings.json" }), JSON.stringify({
 	"workbench.colorTheme": "Default Light+"
 }, undefined, "\t"));
+
+globalThis.monaco = monaco;
+globalThis.vscode = vscode;
+
+setTimeout(function() {
+	console.info("`monaco` and `vscode` have been made available as a browser globals.");
+}, 1000);
