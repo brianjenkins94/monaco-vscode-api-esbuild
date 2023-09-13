@@ -59,7 +59,7 @@
 			background-color: #0090f1;
 			transition: background-color 0.5s;
 		}
-		.sidebar-control > .region {
+		.sidebar-control > .region, .auxbar-control > .region {
 			grid-area: sidebar / sidebar / sidebar-handle / sidebar-handle;
 			min-width: 100%;
 			overflow: hidden;
@@ -83,8 +83,6 @@
 		}
 		.console-control:hover > .handle {
 			grid-area: console-handle;
-			background-color: #0090f1;
-			transition: background-color 0.5s;
 			width: 100%;
 		}
 		.console-control > .region {
@@ -108,9 +106,6 @@
 		}
 		.auxbar-control > .region {
 			grid-area: auxbar-handle / auxbar-handle / auxbar / auxbar;
-			min-width: 100%;
-			overflow: hidden;
-			resize: horizontal;
 			transform-origin: bottom left;
 			scale: -1 100;
 			translate: 100% 0;
