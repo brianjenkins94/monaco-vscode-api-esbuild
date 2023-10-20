@@ -3,10 +3,11 @@
 	"compilerOptions": {
 		"baseUrl": ".",
 		"paths": {
+			"@codingame/*": ["./monaco-vscode-api/demo/node_modules/@codingame/*"],
 			"monaco-editor": ["./monaco-vscode-api/demo/node_modules/monaco-editor"],
-			"monaco-editor/esm/vs/editor/*": ["./monaco-vscode-api/demo/node_modules/monaco-editor/esm/vs/editor/*"],
+			"monaco-editor/*": ["./monaco-vscode-api/demo/node_modules/monaco-editor/*"],
 			"vscode": ["./monaco-vscode-api/demo/node_modules/vscode"],
-			"vscode/*": ["./monaco-vscode-api/demo/node_modules/vscode/dist/*"]
+			"vscode/*": ["./monaco-vscode-api/demo/node_modules/vscode/*"]
 		},
 		"alwaysStrict": true,
 		//"exactOptionalPropertyTypes": true,

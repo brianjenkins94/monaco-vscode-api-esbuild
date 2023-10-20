@@ -184,7 +184,7 @@ await tsup({
 		{
 			"name": "enumerate-workers",
 			"setup": function(build) {
-				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, async function({ "path": workerPath }) {
+				build.onLoad({ "filter": /worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, async function({ "path": workerPath }) {
 					workerPath = path.relative(__dirname, workerPath).split("?")[0].replace(/\\/gu, "/");
 
 					const workerChunkPath = path.join(chunksDirectory, path.basename(workerPath, path.extname(workerPath)));
@@ -234,19 +234,19 @@ export default defineConfig({
 		{
 			"name": "resolve-worker",
 			"setup": function(build) {
-				build.onResolve({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": filePath, importer }) {
+				build.onResolve({ "filter": /worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": filePath, importer }) {
 					if (filePath.startsWith(".")) {
 						return;
 					}
 
-					const baseName = path.basename(filePath.replace(/\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u, ".worker"));
+					const baseName = path.basename(filePath.replace(/worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u, ".worker"));
 
 					return {
 						"path": path.join(__dirname, "chunks", baseName + ".ts")
 					};
 				});
 
-				build.onLoad({ "filter": /\.worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": workerPath }) {
+				build.onLoad({ "filter": /worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": workerPath }) {
 					return {
 						"contents": `
 							export default function() {

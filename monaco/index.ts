@@ -1,41 +1,48 @@
 /// <reference path="../monaco-vscode-api/vscode.proposed.fileSearchProvider.d.ts" />
 /// <reference path="../monaco-vscode-api/vscode.proposed.textSearchProvider.d.ts" />
 
+/* eslint-disable max-lines */
+
 // SOURCE: https://github.com/CodinGame/monaco-vscode-api/blob/main/demo/src/setup.ts
 
 import { ExtensionHostKind, initialize as initializeVscodeExtensions, registerExtension } from "vscode/extensions";
 import { ILogService, LogLevel, StandaloneServices, initialize as initializeMonacoService } from "vscode/services";
 
-import { RegisteredFileSystemProvider, registerFileSystemOverlay } from "vscode/service-override/files";
-import getAccessibilityServiceOverride from "vscode/service-override/accessibility";
-import getAudioCueServiceOverride from "vscode/service-override/audioCue";
-import getConfigurationServiceOverride from "vscode/service-override/configuration";
-import getDebugServiceOverride from "vscode/service-override/debug";
-import getDialogsServiceOverride from "vscode/service-override/dialogs";
-import getExtensionServiceOverride from "vscode/service-override/extensions";
-import getKeybindingsServiceOverride from "vscode/service-override/keybindings";
-import getLanguageDetectionWorkerServiceOverride from "vscode/service-override/languageDetectionWorker";
-import getLanguagesServiceOverride from "vscode/service-override/languages";
-import getMarkersServiceOverride from "vscode/service-override/markers";
-import getModelServiceOverride from "vscode/service-override/model";
-import getNotificationServiceOverride from "vscode/service-override/notifications";
-import getOutputServiceOverride from "vscode/service-override/output";
-import getPreferencesServiceOverride from "vscode/service-override/preferences";
-import getQuickAccessServiceOverride from "vscode/service-override/quickaccess";
-import getSearchServiceOverride from "vscode/service-override/search";
-import getSnippetServiceOverride from "vscode/service-override/snippets";
-import getStorageServiceOverride from "vscode/service-override/storage";
-import getTerminalServiceOverride, { SimpleTerminalBackend, SimpleTerminalProcess } from "vscode/service-override/terminal";
-import getTextmateServiceOverride from "vscode/service-override/textmate";
-import getThemeServiceOverride from "vscode/service-override/theme";
-import type { IReference, IResolvedTextEditorModel, OpenEditor } from "vscode/service-override/views";
-import getViewsServiceOverride, { Parts, attachPart, isEditorPartVisible, isPartVisibile as isPartVisible, onPartVisibilityChange } from "vscode/service-override/views";
+import getAccessibilityServiceOverride from "@codingame/monaco-vscode-accessibility-service-override";
+import getAudioCueServiceOverride from "@codingame/monaco-vscode-audio-cue-service-override";
+import getBannerServiceOverride from "@codingame/monaco-vscode-view-banner-service-override";
+import getConfigurationServiceOverride from "@codingame/monaco-vscode-configuration-service-override";
+import getDebugServiceOverride from "@codingame/monaco-vscode-debug-service-override";
+import getDialogsServiceOverride from "@codingame/monaco-vscode-dialogs-service-override";
+import getEnvironmentServiceOverride from "@codingame/monaco-vscode-environment-service-override";
+import getExtensionServiceOverride from "@codingame/monaco-vscode-extensions-service-override";
+import getKeybindingsServiceOverride from "@codingame/monaco-vscode-keybindings-service-override";
+import getLanguageDetectionWorkerServiceOverride from "@codingame/monaco-vscode-language-detection-worker-service-override";
+import getLanguagesServiceOverride from "@codingame/monaco-vscode-languages-service-override";
+import getLifecycleServiceOverride from "@codingame/monaco-vscode-lifecycle-service-override";
+import getMarkersServiceOverride from "@codingame/monaco-vscode-markers-service-override";
+import getModelServiceOverride from "@codingame/monaco-vscode-model-service-override";
+import getNotificationServiceOverride from "@codingame/monaco-vscode-notifications-service-override";
+import getOutputServiceOverride from "@codingame/monaco-vscode-output-service-override";
+import getPreferencesServiceOverride from "@codingame/monaco-vscode-preferences-service-override";
+import getQuickAccessServiceOverride from "@codingame/monaco-vscode-quickaccess-service-override";
+import getRemoteAgentServiceOverride from "@codingame/monaco-vscode-remote-agent-service-override";
+import getSearchServiceOverride from "@codingame/monaco-vscode-search-service-override";
+import getSnippetServiceOverride from "@codingame/monaco-vscode-snippets-service-override";
+import getStatusBarServiceOverride from "@codingame/monaco-vscode-view-status-bar-service-override";
+import getStorageServiceOverride, { BrowserStorageService } from "@codingame/monaco-vscode-storage-service-override";
+import getTerminalServiceOverride, { SimpleTerminalBackend, SimpleTerminalProcess } from "@codingame/monaco-vscode-terminal-service-override";
+import getTextmateServiceOverride from "@codingame/monaco-vscode-textmate-service-override";
+import getThemeServiceOverride from "@codingame/monaco-vscode-theme-service-override";
+import getTitleBarServiceOverride from "@codingame/monaco-vscode-view-title-bar-service-override";
+import getViewsServiceOverride, { Parts, attachPart, isEditorPartVisible, isPartVisibile as isPartVisible, onPartVisibilityChange } from "@codingame/monaco-vscode-views-service-override";
+import getWorkspaceTrustOverride from "@codingame/monaco-vscode-workspace-trust-service-override";
 
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker.js?worker";
 import ExtensionHostWorker from "vscode/workers/extensionHost.worker?worker";
-import LanguageDetectionWorker from "vscode/workers/languageDetection.worker?worker";
-import OutputLinkComputerWorker from "vscode/workers/outputLinkComputer.worker?worker";
-import TextMateWorker from "vscode/workers/textMate.worker?worker";
+import LanguageDetectionWorker from "@codingame/monaco-vscode-language-detection-worker-service-override/worker?worker";
+import OutputLinkComputerWorker from "@codingame/monaco-vscode-output-service-override/worker?worker";
+import TextMateWorker from "@codingame/monaco-vscode-textmate-service-override/worker?worker";
 
 import * as monaco from "monaco-editor";
 import * as vscode from "vscode";
@@ -187,13 +194,18 @@ window.MonacoEnvironment = {
 };
 
 // Override services
+const remotePath = null;
+const remoteAuthority = null;
+const connectionToken = undefined;
 
 await initializeMonacoService({
 	...getExtensionServiceOverride(ExtensionHostWorker),
 	...getModelServiceOverride(),
 	...getNotificationServiceOverride(),
 	...getDialogsServiceOverride(),
-	...getConfigurationServiceOverride(monaco.Uri.file("/tmp")),
+	...getConfigurationServiceOverride(remotePath === null
+		? monaco.Uri.file("/tmp")
+		: { "id": "remote-workspace", "uri": monaco.Uri.from({ "scheme": "vscode-remote", "path": remotePath, "authority": remoteAuthority }) }),
 	...getKeybindingsServiceOverride(),
 	...getTextmateServiceOverride(),
 	...getThemeServiceOverride(),
@@ -202,10 +214,13 @@ await initializeMonacoService({
 	...getDebugServiceOverride(),
 	...getPreferencesServiceOverride(),
 	...getViewsServiceOverride(openNewCodeEditor),
+	...getBannerServiceOverride(),
+	...getStatusBarServiceOverride(),
+	...getTitleBarServiceOverride(),
 	...getSnippetServiceOverride(),
 	...getQuickAccessServiceOverride({
 		"isKeybindingConfigurationVisible": isEditorPartVisible,
-		"shouldUseGlobalPicker": isEditorPartVisible
+		"shouldUseGlobalPicker": (_editor, isStandalone) => !isStandalone && isEditorPartVisible()
 	}),
 	...getOutputServiceOverride(),
 	...getTerminalServiceOverride(new TerminalBackend()),
@@ -213,7 +228,14 @@ await initializeMonacoService({
 	...getMarkersServiceOverride(),
 	...getAccessibilityServiceOverride(),
 	...getLanguageDetectionWorkerServiceOverride(),
-	...getStorageServiceOverride()
+	...getStorageServiceOverride(),
+	...getRemoteAgentServiceOverride(connectionToken),
+	...getLifecycleServiceOverride(),
+	...getEnvironmentServiceOverride({
+		"remoteAuthority": remoteAuthority,
+		"enableWorkspaceTrust": true
+	}),
+	...getWorkspaceTrustOverride()
 });
 
 StandaloneServices.get(ILogService).setLevel(LogLevel.Off);
@@ -221,6 +243,8 @@ StandaloneServices.get(ILogService).setLevel(LogLevel.Off);
 await initializeVscodeExtensions();
 
 for (const { part, element } of [
+	//{ "part": Parts.TITLEBAR_PART, "element": "#titleBar" },
+	//{ "part": Parts.BANNER_PART, "element": "#banner" },
 	{ "part": Parts.SIDEBAR_PART, "element": "#sidebar" },
 	//{ "part": Parts.ACTIVITYBAR_PART, "element": "#activityBar" },
 	{ "part": Parts.PANEL_PART, "element": "#console" },
@@ -243,47 +267,47 @@ for (const { part, element } of [
 
 // SOURCE: https://github.com/CodinGame/monaco-vscode-api/blob/main/demo/src/main.ts
 
-//import "vscode/default-extensions/clojure";
-//import "vscode/default-extensions/coffeescript";
-//import "vscode/default-extensions/cpp";
-//import "vscode/default-extensions/csharp";
-import "vscode/default-extensions/css";
-import "vscode/default-extensions/diff";
-//import "vscode/default-extensions/fsharp";
-//import "vscode/default-extensions/go";
-//import "vscode/default-extensions/groovy";
-import "vscode/default-extensions/html";
-//import "vscode/default-extensions/java";
-import "vscode/default-extensions/javascript";
-import "vscode/default-extensions/json";
-//import "vscode/default-extensions/julia";
-//import "vscode/default-extensions/lua";
-import "vscode/default-extensions/markdown-basics";
-//import "vscode/default-extensions/objective-c";
-//import "vscode/default-extensions/perl";
-//import "vscode/default-extensions/php";
-//import "vscode/default-extensions/powershell";
-//import "vscode/default-extensions/python";
-//import "vscode/default-extensions/r";
-//import "vscode/default-extensions/ruby";
-//import "vscode/default-extensions/rust";
-import "vscode/default-extensions/scss";
-import "vscode/default-extensions/shellscript";
-//import "vscode/default-extensions/sql";
-//import "vscode/default-extensions/swift";
-import "vscode/default-extensions/typescript-basics";
-//import "vscode/default-extensions/vb";
-import "vscode/default-extensions/xml";
-import "vscode/default-extensions/yaml";
+import "@codingame/monaco-vscode-clojure-default-extension";
+import "@codingame/monaco-vscode-coffeescript-default-extension";
+import "@codingame/monaco-vscode-cpp-default-extension";
+import "@codingame/monaco-vscode-csharp-default-extension";
+import "@codingame/monaco-vscode-css-default-extension";
+import "@codingame/monaco-vscode-diff-default-extension";
+import "@codingame/monaco-vscode-fsharp-default-extension";
+import "@codingame/monaco-vscode-go-default-extension";
+import "@codingame/monaco-vscode-groovy-default-extension";
+import "@codingame/monaco-vscode-html-default-extension";
+import "@codingame/monaco-vscode-java-default-extension";
+import "@codingame/monaco-vscode-javascript-default-extension";
+import "@codingame/monaco-vscode-json-default-extension";
+import "@codingame/monaco-vscode-julia-default-extension";
+import "@codingame/monaco-vscode-lua-default-extension";
+import "@codingame/monaco-vscode-markdown-basics-default-extension";
+import "@codingame/monaco-vscode-objective-c-default-extension";
+import "@codingame/monaco-vscode-perl-default-extension";
+import "@codingame/monaco-vscode-php-default-extension";
+import "@codingame/monaco-vscode-powershell-default-extension";
+import "@codingame/monaco-vscode-python-default-extension";
+import "@codingame/monaco-vscode-r-default-extension";
+import "@codingame/monaco-vscode-ruby-default-extension";
+import "@codingame/monaco-vscode-rust-default-extension";
+import "@codingame/monaco-vscode-scss-default-extension";
+import "@codingame/monaco-vscode-shellscript-default-extension";
+import "@codingame/monaco-vscode-sql-default-extension";
+import "@codingame/monaco-vscode-swift-default-extension";
+import "@codingame/monaco-vscode-typescript-basics-default-extension";
+import "@codingame/monaco-vscode-vb-default-extension";
+import "@codingame/monaco-vscode-xml-default-extension";
+import "@codingame/monaco-vscode-yaml-default-extension";
 
-import "vscode/default-extensions/theme-defaults";
-import "vscode/default-extensions/theme-seti";
-import "vscode/default-extensions/references-view";
-import "vscode/default-extensions/search-result";
-import "vscode/default-extensions/configuration-editing";
-//import "vscode/default-extensions/markdown-math";
-import "vscode/default-extensions/npm";
-//import "vscode/default-extensions/media-preview";
+import "@codingame/monaco-vscode-theme-defaults-default-extension";
+import "@codingame/monaco-vscode-theme-seti-default-extension";
+import "@codingame/monaco-vscode-references-view-default-extension";
+import "@codingame/monaco-vscode-search-result-default-extension";
+import "@codingame/monaco-vscode-configuration-editing-default-extension";
+import "@codingame/monaco-vscode-markdown-math-default-extension";
+import "@codingame/monaco-vscode-npm-default-extension";
+import "@codingame/monaco-vscode-media-preview-default-extension";
 
 // monaco-vscode-api/demo/src/features/search.ts
 const { getApi } = registerExtension({
