@@ -1,8 +1,10 @@
 import { ExtensionHostKind, createModelReference, monaco, registerExtension, vscode } from "./monaco";
 
-const result = registerExtension(new URL("./extensions/hello-world/package.json", import.meta.url), ExtensionHostKind.LocalProcess);
+const extensionManifest = new URL("./extensions/helloworld-web-sample/package.json", import.meta.url);
 
-console.log(result);
+const { registerFileUrl } = registerExtension(await (await fetch(extensionManifest)).json(), ExtensionHostKind.LocalProcess);
+
+registerFileUrl("/hello-world.json", extensionManifest.toString());
 
 const modelReference = await createModelReference(monaco.Uri.file("/tmp/test.js"), `// import anotherfile
 let variable = 1

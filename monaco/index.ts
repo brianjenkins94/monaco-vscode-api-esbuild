@@ -37,6 +37,7 @@ import getThemeServiceOverride from "@codingame/monaco-vscode-theme-service-over
 import getTitleBarServiceOverride from "@codingame/monaco-vscode-view-title-bar-service-override";
 import getViewsServiceOverride, { Parts, attachPart, isEditorPartVisible, isPartVisibile as isPartVisible, onPartVisibilityChange } from "@codingame/monaco-vscode-views-service-override";
 import getWorkspaceTrustOverride from "@codingame/monaco-vscode-workspace-trust-service-override";
+import { RegisteredFileSystemProvider, registerExtensionFile, registerFileSystemOverlay } from "@codingame/monaco-vscode-files-service-override";
 
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker.js?worker";
 import ExtensionHostWorker from "vscode/workers/extensionHost.worker?worker";
@@ -198,6 +199,16 @@ const remotePath = null;
 const remoteAuthority = null;
 const connectionToken = undefined;
 
+/*
+const userFileSystemProvider = new RegisteredFileSystemProvider(false);
+
+registerCustomProvider("user-store", userFileSystemProvider);
+
+userFileSystemProvider.registerFile(new RegisteredMemoryFile(monaco.Uri.from({ "scheme": "user-store", "path": "/User/settings.json" }), JSON.stringify({
+	"workbench.colorTheme": "Default Light+"
+}, undefined, "\t")));
+*/
+
 await initializeMonacoService({
 	...getExtensionServiceOverride(ExtensionHostWorker),
 	...getModelServiceOverride(),
@@ -310,7 +321,7 @@ import "@codingame/monaco-vscode-npm-default-extension";
 import "@codingame/monaco-vscode-media-preview-default-extension";
 
 // monaco-vscode-api/demo/src/features/search.ts
-const { getApi } = registerExtension({
+const { registerFileUrl, getApi } = registerExtension({
 	"name": "searchProvider",
 	"publisher": "codingame",
 	"version": "1.0.0",
@@ -349,16 +360,15 @@ api.workspace.registerTextSearchProvider("file", {
 });
 
 // monaco-vscode-api/demo/src/features/filesystem";
-import { RegisteredFileSystemProvider, registerFileSystemOverlay } from "@codingame/monaco-vscode-files-service-override";
-
 const fileSystemProvider = new RegisteredFileSystemProvider(false);
 
 registerFileSystemOverlay(1, fileSystemProvider);
 
 export {
-	ExtensionHostKind,
 	createModelReference,
+	ExtensionHostKind,
 	monaco,
 	registerExtension,
+	registerFileUrl,
 	vscode
 };
