@@ -37,7 +37,7 @@ const importMetaUrlPlugin = {
 		build.onLoad({ "filter": /.*/u }, async function({ "path": filePath }) {
 			let contents = await fs.readFile(filePath, { "encoding": "utf8" });
 
-			const newUrlRegEx = /new URL\((?:"|')(.*?)(?:"|'), import\.meta\.url\)(?:\.\w+(?:\(\))?)?/gu;
+			const newUrlRegEx = /(?:new URL\()+(?:"|')(.*?)(?:"|')(?:, import\.meta\.url\)(?:\.\w+(?:\(\))?)?)+/gu;
 
 			const parentDirectory = path.dirname(filePath);
 
@@ -49,6 +49,7 @@ const importMetaUrlPlugin = {
 					if (!existsSync(filePath)) {
 						const fallbackPath = path.join(__dirname, "monaco-vscode-api", "demo", "node_modules", match);
 
+						// TODO: Improve
 						if (existsSync(fallbackPath)) {
 							filePath = fallbackPath;
 							baseName = path.basename(filePath);
@@ -56,7 +57,17 @@ const importMetaUrlPlugin = {
 
 							copyFileSync(filePath, path.join(assetsDirectory, baseName));
 						} else {
-							return;
+							const fallbackPath = path.join(__dirname, "monaco-vscode-api", "demo", "node_modules", "vscode", match);
+
+							if (existsSync(fallbackPath)) {
+								filePath = fallbackPath;
+								baseName = path.basename(filePath);
+								match = "./assets/" + baseName;
+
+								copyFileSync(filePath, path.join(assetsDirectory, baseName));
+							} else {
+								return;
+							}
 						}
 					}
 
@@ -239,7 +250,7 @@ export default defineConfig({
 						return;
 					}
 
-					const baseName = path.basename(filePath.replace(/worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u, ".worker"));
+					const baseName = path.basename(filePath.replace(/worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u, "worker"));
 
 					return {
 						"path": path.join(__dirname, "chunks", baseName + ".ts")

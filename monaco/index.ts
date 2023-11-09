@@ -349,6 +349,8 @@ api.workspace.registerTextSearchProvider("file", {
 });
 
 // monaco-vscode-api/demo/src/features/filesystem";
+import { RegisteredFileSystemProvider, registerFileSystemOverlay } from "@codingame/monaco-vscode-files-service-override";
+
 const fileSystemProvider = new RegisteredFileSystemProvider(false);
 
 registerFileSystemOverlay(1, fileSystemProvider);
