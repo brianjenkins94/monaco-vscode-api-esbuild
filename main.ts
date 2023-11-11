@@ -4,7 +4,8 @@ const extensionManifest = new URL("./extensions/helloworld-web-sample/package.js
 
 const { registerFileUrl } = registerExtension(await (await fetch(extensionManifest)).json(), ExtensionHostKind.LocalProcess);
 
-registerFileUrl("/hello-world.json", extensionManifest.toString());
+registerFileUrl("/package.json", extensionManifest.toString());
+registerFileUrl("/dist/web/extension.js", new URL(new URL("./extensions/helloworld-web-sample/dist/web/extension.js", import.meta.url).toString(), import.meta.url).toString());
 
 const modelReference = await createModelReference(monaco.Uri.file("/tmp/test.js"), `// import anotherfile
 let variable = 1

@@ -34,17 +34,51 @@ const assetsDirectory = path.join(distDirectory, "assets");
 const importMetaUrlPlugin = {
 	"name": "import-meta-url",
 	"setup": function(build) {
+		async function replaceAsync(regex, input, callback = async (execResults: RegExpExecArray) => Promise.resolve(execResults[1])) {
+			regex = new RegExp(regex.source, [...new Set([...regex.flags, "d"])].join(""));
+
+			const output = [];
+
+			let index = input.length;
+			let result;
+
+			for (let origin = 0; result = regex.exec(input); origin = index) {
+				index = result.indices[1][1] + 1;
+
+				output.push(input.substring(origin, result.indices[1][0] - 1), await callback(result));
+			}
+
+			output.push(input.substring(index));
+
+			return output.join("");
+		}
+
 		build.onLoad({ "filter": /.*/u }, async function({ "path": filePath }) {
 			let contents = await fs.readFile(filePath, { "encoding": "utf8" });
 
-			const newUrlRegEx = /(?:new URL\()+(?:"|')(.*?)(?:"|')(?:, import\.meta\.url\)(?:\.\w+(?:\(\))?)?)+/gu;
+			const newUrlRegEx = /new URL\((?:"|')(.*?)(?:"|'), import\.meta\.url\)(?:\.\w+(?:\(\))?)?/gu;
 
 			const parentDirectory = path.dirname(filePath);
 
 			if (newUrlRegEx.test(contents)) {
-				contents = contents.replace(newUrlRegEx, function(_, match) {
+				contents = await replaceAsync(newUrlRegEx, contents, async function([_, match]) {
+					if (match.endsWith("src/web/extension.ts") || match.endsWith("helloworld-web-sample/package.json")) {
+						debugger;
+					}
+
 					let filePath = path.join(parentDirectory, match);
 					let baseName = path.basename(filePath);
+
+					if (filePath.endsWith(".ts")) {
+						baseName = path.basename(filePath);
+						match = "./assets/" + baseName;
+
+						await tsup({
+							"config": false,
+							"entry": [baseName],
+							"outfile": "./assets/" + baseName
+						});
+					}
 
 					if (!existsSync(filePath)) {
 						const fallbackPath = path.join(__dirname, "monaco-vscode-api", "demo", "node_modules", match);
@@ -66,7 +100,7 @@ const importMetaUrlPlugin = {
 
 								copyFileSync(filePath, path.join(assetsDirectory, baseName));
 							} else {
-								return;
+								throw new Error("This should never happen.");
 							}
 						}
 					}
@@ -217,7 +251,8 @@ await tsup({
 				});
 			}
 		}
-	]
+	],
+	"write": false
 });
 
 if (existsSync(distDirectory)) {
