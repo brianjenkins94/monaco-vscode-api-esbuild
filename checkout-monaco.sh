@@ -16,8 +16,13 @@ fi
 
 cd demo
 npm uninstall dockerode
-# FIXME: This doesn't work on macOS
-sed -i "s/file:[^\"]*/latest/g" package.json
+
+if [[ "$(uname -s)" == Darwin* ]]; then
+	sed -i '' "s/file:[^\"]*/latest/g" package.json
+else
+	sed -i "s/file:[^\"]*/latest/g" package.json
+fi
+
 npm install --ignore-scripts vscode@npm:@codingame/monaco-vscode-api
 node node_modules/vscode/monaco-treemending.js
 #npm start
