@@ -1,6 +1,6 @@
 import { ExtensionHostKind, createModelReference, monaco, registerExtension, vscode } from "./monaco";
 
-const extensionManifest = "./assets" + new URL("./extensions/hello-world/package.json", import.meta.url).pathname;
+const extensionManifest = new URL("./extensions/hello-world/package.json", import.meta.url).pathname;
 
 const { registerFileUrl } = registerExtension(await (await fetch(extensionManifest)).json(), ExtensionHostKind.LocalProcess);
 

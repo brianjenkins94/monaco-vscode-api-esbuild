@@ -55,17 +55,15 @@ const importMetaUrlPlugin = {
 			return output.join("");
 		}
 
-		build.onLoad({ "filter": /.*/u }, async function({ "path": filePath }) {
-			let contents = await fs.readFile(filePath, { "encoding": "utf8" });
+		build.onLoad({ "filter": /.*/u }, async function({ "path": importer }) {
+			let contents = await fs.readFile(importer, { "encoding": "utf8" });
 
 			const newUrlRegEx = /new URL\((?:"|')(.*?)(?:"|'), import\.meta\.url\)(?:\.\w+(?:\(\))?)?/gu;
-
-			const parentDirectory = path.dirname(filePath);
 
 			if (newUrlRegEx.test(contents)) {
 				// TODO: This whole function could use a review.
 				contents = await replaceAsync(newUrlRegEx, contents, async function([_, match]) {
-					let filePath = path.join(parentDirectory, match);
+					let filePath = path.join(path.dirname(importer), match);
 					let baseName = path.basename(filePath);
 
 					if (filePath.endsWith(".ts")) {
@@ -156,7 +154,7 @@ const importMetaUrlPlugin = {
 						await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 
 						// So that we can refer to it by its unique name.
-						return "\"./" + baseName + "\"";
+						return "\"" + (path.relative(importer, filePath).split(/\\|\//gu).length > 2 ? "./assets/" : "./") + baseName + "\"";
 					} catch (error) {
 						// Otherwise, leave it unchanged.
 						return "\"" + match + "\"";
@@ -165,7 +163,7 @@ const importMetaUrlPlugin = {
 
 				return {
 					"contents": contents,
-					"loader": path.extname(filePath).substring(1)
+					"loader": path.extname(importer).substring(1)
 				};
 			}
 		});
