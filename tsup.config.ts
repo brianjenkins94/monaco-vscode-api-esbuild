@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, promises as fs, readFileSync, writeFileSync } from "fs";
+import { existsSync, promises as fs } from "fs";
 import { createHash } from "crypto";
 import { defineConfig } from "tsup";
 import { resolve } from "import-meta-resolve";
@@ -20,9 +20,11 @@ async function tsup(options) {
 		"treeshake": true,
 		...options,
 		// WORKAROUND: `tsup` gives the entry straight to `globby` and `globby` doesn't get along with Windows paths.
-		"entry": options.entry.map(function(entry) {
+		"entry": Array.isArray(options.entry) ? options.entry.map(function(entry) {
 			return entry.replace(/\\/gu, "/");
-		})
+		}) : Object.fromEntries(Object.entries(options.entry).map(function([key, value]) {
+			return [key, value.replace(/\\/gu, "/")];
+		}))
 	});
 }
 
@@ -61,23 +63,33 @@ const importMetaUrlPlugin = {
 			const parentDirectory = path.dirname(filePath);
 
 			if (newUrlRegEx.test(contents)) {
+				// TODO: This whole function could use a review.
 				contents = await replaceAsync(newUrlRegEx, contents, async function([_, match]) {
-					if (match.endsWith("src/web/extension.ts") || match.endsWith("helloworld-web-sample/package.json")) {
-						debugger;
-					}
-
 					let filePath = path.join(parentDirectory, match);
 					let baseName = path.basename(filePath);
 
 					if (filePath.endsWith(".ts")) {
-						baseName = path.basename(filePath);
-						match = "./assets/" + baseName;
+						const file = await fs.readFile(filePath, { "encoding": "utf8" });
+
+						const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
+
+						const extension = path.extname(baseName);
+						baseName = path.basename(baseName, extension);
+
+						baseName = baseName + "-" + hash;
+						match = "./assets/" + baseName + ".js";
 
 						await tsup({
-							"config": false,
-							"entry": [baseName],
-							"outfile": "./assets/" + baseName
+							"config": false, // Is this needed?
+							"entry": {
+								[baseName]: filePath
+							},
+							"outDir": assetsDirectory
 						});
+
+						filePath = path.join(assetsDirectory, baseName + ".js");
+
+						await fs.writeFile(filePath, "module.exports.activate = " + (await import(url.pathToFileURL(filePath).toString()))["activate"].toString());
 					}
 
 					if (!existsSync(filePath)) {
@@ -87,18 +99,18 @@ const importMetaUrlPlugin = {
 						if (existsSync(fallbackPath)) {
 							filePath = fallbackPath;
 							baseName = path.basename(filePath);
-							match = "./assets/" + baseName;
+							match = "./" + baseName;
 
-							copyFileSync(filePath, path.join(assetsDirectory, baseName));
+							await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 						} else {
 							const fallbackPath = path.join(__dirname, "monaco-vscode-api", "demo", "node_modules", "vscode", match);
 
 							if (existsSync(fallbackPath)) {
 								filePath = fallbackPath;
 								baseName = path.basename(filePath);
-								match = "./assets/" + baseName;
+								match = "./" + baseName;
 
-								copyFileSync(filePath, path.join(assetsDirectory, baseName));
+								await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 							} else {
 								throw new Error("This should never happen.");
 							}
@@ -113,22 +125,22 @@ const importMetaUrlPlugin = {
 						case filePath.endsWith(".map"):
 							return "\"" + match + "\"";
 						case filePath.endsWith(".json"):
-							writeFileSync(filePath, JSON.stringify(JSON5.parse(readFileSync(filePath, { "encoding": "utf8" })), undefined, "\t") + "\n");
+							await fs.writeFile(filePath, JSON.stringify(JSON5.parse(await fs.readFile(filePath, { "encoding": "utf8" }) || "{}"), undefined, "\t") + "\n");
 							break;
 						case filePath.endsWith(".mp3"):
 							return "\"data:audio/mpeg;base64,\"";
 						case filePath.endsWith(".html"):
 						case filePath.endsWith(".tmLanguage"):
 						case filePath.endsWith(".woff"):
-							copyFileSync(filePath, path.join(assetsDirectory, baseName));
+							await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 
-							return "\"./assets/" + baseName + "\"";
+							return "\"./" + baseName + "\"";
 						default:
 					}
 
 					try {
 						// Caching opportunity here:
-						const file = readFileSync(filePath);
+						const file = await fs.readFile(filePath);
 
 						// If it's JSON-like
 						JSON.parse(file.toString("utf8"));
@@ -141,10 +153,10 @@ const importMetaUrlPlugin = {
 						baseName = baseName + "-" + hash + extension;
 
 						// Copy it to the assets directory
-						copyFileSync(filePath, path.join(assetsDirectory, baseName));
+						await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 
 						// So that we can refer to it by its unique name.
-						return "\"./assets/" + baseName + "\"";
+						return "\"./" + baseName + "\"";
 					} catch (error) {
 						// Otherwise, leave it unchanged.
 						return "\"" + match + "\"";
