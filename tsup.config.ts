@@ -69,7 +69,7 @@ const importMetaUrlPlugin = {
 					let baseName = path.basename(filePath);
 
 					if (filePath.endsWith(".ts")) {
-						const file = await fs.readFile(filePath, { "encoding": "utf8" });
+						const file = await fs.readFile(filePath);
 
 						const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
 
