@@ -83,14 +83,18 @@ const importMetaUrlPlugin = {
 								[baseName]: filePath
 							},
 							"external": ["vscode"],
-							"outDir": assetsDirectory
+							"format": "cjs",
+							"outDir": assetsDirectory,
+							"outExtension": function({ format }) {
+								return {
+									"js": ".js"
+								};
+							}
 						});
 
 						filePath = path.join(assetsDirectory, baseName + ".js");
 
 						await fs.writeFile(filePath, (await fs.readFile(filePath, { "encoding": "utf8" })).replace(/^(import .*? from (?:'|")vscode.*?(?:'|");)$/gmu, "//$1"));
-
-						await fs.writeFile(filePath, "module.exports.activate = " + (await import(url.pathToFileURL(filePath).toString()))["activate"].toString());
 					}
 
 					if (!existsSync(filePath)) {

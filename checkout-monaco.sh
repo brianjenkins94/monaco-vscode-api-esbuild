@@ -18,7 +18,7 @@ cd demo
 npm uninstall dockerode
 
 if [[ "$(uname -s)" == Darwin* ]]; then
-	sed -i '' "s/file:[^\"]*/latest/g" package.json
+	sed -i "" "s/file:[^\"]*/latest/g" package.json
 else
 	sed -i "s/file:[^\"]*/latest/g" package.json
 fi
