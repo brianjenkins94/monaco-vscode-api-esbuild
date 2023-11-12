@@ -93,8 +93,6 @@ const importMetaUrlPlugin = {
 						});
 
 						filePath = path.join(assetsDirectory, baseName + ".js");
-
-						await fs.writeFile(filePath, (await fs.readFile(filePath, { "encoding": "utf8" })).replace(/^(import .*? from (?:'|")vscode.*?(?:'|");)$/gmu, "//$1"));
 					}
 
 					if (!existsSync(filePath)) {
