@@ -91,7 +91,7 @@ const importMetaUrlPlugin = {
 							}
 						});
 
-						return "\"./" + baseName + ".js\"";
+						return "\"./assets/" + baseName + ".js\"";
 					}
 
 					// TODO: Improve
