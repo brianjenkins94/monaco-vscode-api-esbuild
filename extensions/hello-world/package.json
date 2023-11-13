@@ -8,7 +8,7 @@
 	"license": "MIT",
 	"repository": "https://github.com/microsoft/vscode-extension-samples/helloworld-web-sample",
 	"engines": {
-		"vscode": "^1.74.0"
+		"vscode": "^1.84.0"
 	},
 	"categories": [
 		"Other"
@@ -44,9 +44,5 @@
 				}
 			}
 		]
-	},
-	"devDependencies": {
-		"@types/vscode": "latest",
-		"@vscode/test-web": "latest"
 	}
 }

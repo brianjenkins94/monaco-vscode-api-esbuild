@@ -101,6 +101,7 @@ const openNewCodeEditor: OpenEditor = async (modelRef) => {
 		editor.onDidBlurEditorWidget(() => {
 			currentEditor?.dispose();
 		});
+
 		container.addEventListener("mousedown", (event) => {
 			if (event.target !== container) {
 				return;
@@ -126,6 +127,7 @@ class TerminalBackend extends SimpleTerminalBackend {
 			type: string;
 			value: string;
 		}>();
+
 		class FakeTerminalProcess extends SimpleTerminalProcess {
 			private column = 0;
 			public async start(): Promise<undefined> {
@@ -166,9 +168,9 @@ class TerminalBackend extends SimpleTerminalBackend {
 				console.log("resize", cols, rows);
 			}
 
-			public override clearBuffer(): Promise<void> | void {
-			}
+			public override clearBuffer(): Promise<void> | void { }
 		}
+
 		return new FakeTerminalProcess(1, 1, "/tmp", dataEmitter.event);
 	};
 }
@@ -355,6 +357,7 @@ api.workspace.registerTextSearchProvider("file", {
 				});
 			}
 		}
+
 		return {};
 	}
 });

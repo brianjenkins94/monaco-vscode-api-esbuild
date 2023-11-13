@@ -12,6 +12,13 @@ function createWorkerLanguageClient(context: vscode.ExtensionContext, clientOpti
 }
 
 export function activate(context: vscode.ExtensionContext) {
+	context.subscriptions.push(vscode.commands.registerCommand("helloworld-web-sample.helloWorld", () => {
+		// The code you place here will be executed every time your command is executed
+
+		// Display a message box to the user
+		vscode.window.showInformationMessage("Hello World from helloworld-web-sample in a web extension host!");
+	}));
+
 	const documentSelector = [{ language: 'plaintext' }];
 
 	// Options to control the language client
@@ -23,12 +30,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const client = createWorkerLanguageClient(context, clientOptions);
 
-	const disposable = client.start();
-	context.subscriptions.push(disposable);
+	context.subscriptions.push(client.start());
 
-	client.onReady().then(() => {
-		console.log('lsp-web-extension-sample server is ready');
-	});
+	//client.onReady().then(() => {
+	//	console.log('lsp-web-extension-sample server is ready');
+	//});
 }
 
 export function deactivate() { }
