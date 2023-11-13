@@ -91,7 +91,7 @@ const importMetaUrlPlugin = {
 							}
 						});
 
-						filePath = path.join(assetsDirectory, baseName + ".js");
+						return "\"./" + baseName + ".js\"";
 					}
 
 					// TODO: Improve
@@ -102,30 +102,13 @@ const importMetaUrlPlugin = {
 						];
 
 						for (const fallbackPath of fallbackPaths) {
-							if (!existsSync(fallbackPath)) {
-								continue;
+							if (existsSync(fallbackPath)) {
+								filePath = fallbackPath;
+								baseName = path.basename(filePath);
+
+								break;
 							}
-
-							filePath = fallbackPath;
-							baseName = path.basename(filePath);
-
-							// Caching opportunity here:
-							const file = await fs.readFile(filePath);
-
-							const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
-
-							const extension = path.extname(baseName);
-							baseName = path.basename(baseName, extension);
-
-							baseName = baseName + "-" + hash + extension;
-
-							// Copy it to the assets directory
-							await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
-
-							return "\"./" + baseName + "\"";
 						}
-
-						throw new Error("This should never happen.");
 					}
 
 					switch (true) {
@@ -160,7 +143,7 @@ const importMetaUrlPlugin = {
 					await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 
 					// So that we can refer to it by its unique name.
-					return "\"" + (path.relative(importer, filePath).split(/\\+|\//gu).length > 2 ? "./assets/" : "./") + baseName + "\"";
+					return "\"./" + baseName + "\"";
 				});
 
 				return {
