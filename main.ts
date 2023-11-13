@@ -6,6 +6,7 @@ const { registerFileUrl } = registerExtension(await (await fetch(extensionManife
 
 registerFileUrl("/package.json", extensionManifest);
 registerFileUrl("/extension.js", new URL("./extensions/hello-world/extension.ts", import.meta.url).toString());
+registerFileUrl("/server.js", new URL("./extensions/hello-world/server.ts", import.meta.url).toString());
 
 const modelReference = await createModelReference(monaco.Uri.file("/tmp/test.js"), `// import anotherfile
 let variable = 1

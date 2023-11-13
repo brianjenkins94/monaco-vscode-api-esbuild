@@ -13,7 +13,9 @@
 	"categories": [
 		"Other"
 	],
-	"activationEvents": [],
+	"activationEvents": [
+		"onLanguage:plaintext"
+	],
 	"browser": "./extension.js",
 	"contributes": {
 		"commands": [
@@ -21,31 +23,30 @@
 				"command": "helloworld-web-sample.helloWorld",
 				"title": "Hello World"
 			}
+		],
+		"configuration": [
+			{
+				"order": 22,
+				"id": "lsp-web-extension-sample",
+				"title": "lsp-web-extension-sample",
+				"properties": {
+					"lsp-web-extension-sample.trace.server": {
+						"type": "string",
+						"scope": "window",
+						"enum": [
+							"off",
+							"messages",
+							"verbose"
+						],
+						"default": "verbose",
+						"description": "Traces the communication between VS Code and the lsp-web-extension-sample language server."
+					}
+				}
+			}
 		]
 	},
-	"scripts": {
-		"test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=.",
-		"pretest": "npm run compile-web",
-		"vscode:prepublish": "npm run package-web",
-		"compile-web": "webpack",
-		"watch-web": "webpack --watch",
-		"package-web": "webpack --mode production --devtool hidden-source-map",
-		"lint": "eslint src --ext ts"
-	},
 	"devDependencies": {
-		"@types/mocha": "^9.0.0",
-		"@types/vscode": "^1.73.0",
-		"@types/webpack-env": "^1.16.2",
-		"@typescript-eslint/eslint-plugin": "^5.42.0",
-		"@typescript-eslint/parser": "^5.42.0",
-		"@vscode/test-web": "^0.0.22",
-		"assert": "^2.0.0",
-		"eslint": "^8.26.0",
-		"mocha": "^9.2.0",
-		"process": "^0.11.10",
-		"ts-loader": "^9.2.5",
-		"typescript": "^5.1.3",
-		"webpack": "^5.52.1",
-		"webpack-cli": "^4.8.0"
+		"@types/vscode": "latest",
+		"@vscode/test-web": "latest"
 	}
 }

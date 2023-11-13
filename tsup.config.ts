@@ -1,10 +1,12 @@
-import { existsSync, promises as fs } from "fs";
 import { createHash } from "crypto";
 import { defineConfig } from "tsup";
+import { existsSync, promises as fs } from "fs";
 import { resolve } from "import-meta-resolve";
 import * as path from "path";
 import * as url from "url";
 import JSON5 from "json5";
+import polyfillNode from "node-stdlib-browser/helpers/esbuild/plugin"; // NOT "esbuild-plugins-node-modules-polyfill" OR "esbuild-plugin-polyfill-node"
+import stdLibBrowser from "node-stdlib-browser";
 
 function esbuildOptions(options, context) {
 	options.assetNames = "assets/[name]";
@@ -20,14 +22,13 @@ async function tsup(options) {
 		"treeshake": true,
 		...options,
 		// WORKAROUND: `tsup` gives the entry straight to `globby` and `globby` doesn't get along with Windows paths.
-		"entry": Array.isArray(options.entry) ? options.entry.map(function(entry) {
+		"entry": options.entry.map(function(entry) {
 			return entry.replace(/\\/gu, "/");
-		}) : Object.fromEntries(Object.entries(options.entry).map(function([key, value]) {
-			return [key, value.replace(/\\/gu, "/")];
-		}))
+		})
 	});
 }
 
+const cacheDirectory = path.join(__dirname, ".cache");
 const distDirectory = path.join(__dirname, "dist");
 const assetsDirectory = path.join(distDirectory, "assets");
 
@@ -58,7 +59,7 @@ const importMetaUrlPlugin = {
 		build.onLoad({ "filter": /.*/u }, async function({ "path": importer }) {
 			let contents = await fs.readFile(importer, { "encoding": "utf8" });
 
-			const newUrlRegEx = /new URL\((?:"|')(.*?)(?:"|'), import\.meta\.url\)(?:\.\w+(?:\(\))?)?/gu;
+			const newUrlRegEx = /new URL\((?:"|')(.*?)(?:"|'), \w+(?:\.\w+)*\)(?:\.\w+(?:\(\))?)?/gu;
 
 			if (newUrlRegEx.test(contents)) {
 				// TODO: This whole function could use a review.
@@ -67,37 +68,41 @@ const importMetaUrlPlugin = {
 					let baseName = path.basename(filePath);
 
 					if (filePath.endsWith(".ts")) {
-						const file = await fs.readFile(filePath);
+						await Promise.all((await fs.readdir(cacheDirectory)).map(function(path) {
+							return new Promise<void>(async function(resolve, reject) {
+								await fs.rm(path, { "recursive": true, "force": true });
 
-						const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
+								resolve();
+							});
+						}));
+
+						await tsup({
+							"config": false,
+							"entry": [filePath],
+							"inject": [
+								url.fileURLToPath(import.meta.resolve("node-stdlib-browser/helpers/esbuild/shim"))
+							],
+							"define": {
+								"Buffer": "Buffer"
+							},
+							"esbuildPlugins": [
+								// These plugins don't appear to be order-sensitive.
+								polyfillNode(Object.fromEntries(["buffer", "crypto", "events", "os", "net", "path", "process", "stream", "util"].map(function(libName) {
+									return [libName, stdLibBrowser[libName]]
+								}))),
+								importMetaUrlPlugin
+							],
+							"external": ["vscode"], //[/^vscode.*/u],
+							"format": "cjs",
+							"outDir": cacheDirectory,
+							"platform": "browser"
+						});
 
 						const extension = path.extname(baseName);
 						baseName = path.basename(baseName, extension);
 
-						baseName = baseName + "-" + hash;
-
-						await tsup({
-							"config": false, // Is this needed?
-							"entry": {
-								[baseName]: filePath
-							},
-							"external": ["vscode"],
-							"format": "cjs",
-							"outDir": assetsDirectory,
-							"outExtension": function({ format }) {
-								return {
-									"js": ".js"
-								};
-							}
-						});
-
-						baseName += ".js";
-
-						if (importer.endsWith("main.ts")) {
-							return "\"./assets/" + baseName + "\"";
-						}
-
-						return "\"./" + baseName + "\"";
+						filePath = path.join(cacheDirectory, baseName + ".cjs");
+						baseName = baseName + ".js";
 					}
 
 					// TODO: Improve
@@ -148,7 +153,7 @@ const importMetaUrlPlugin = {
 					// Copy it to the assets directory
 					await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 
-					if (importer.endsWith("main.ts")) {
+					if (importer.endsWith(".ts")) {
 						return "\"./assets/" + baseName + "\"";
 					}
 
@@ -178,7 +183,7 @@ async function findParentPackageJson(directory) {
 const chunksDirectory = path.join(__dirname, "chunks");
 
 if (existsSync(chunksDirectory)) {
-	await fs.rm(chunksDirectory, { "recursive": true });
+	await fs.rm(chunksDirectory, { "recursive": true, "force": true });
 }
 
 await fs.mkdir(chunksDirectory, { "recursive": true });
@@ -260,11 +265,23 @@ await tsup({
 	"write": false
 });
 
-if (existsSync(distDirectory)) {
-	await fs.rm(distDirectory, { "recursive": true });
-}
+await Promise.all([distDirectory, cacheDirectory].map(function(directory) {
+	return new Promise<void>(async function(resolve, reject) {
+		if (existsSync(directory)) {
+			await fs.rm(directory, { "recursive": true, "force": true });
+		}
 
-await fs.mkdir(assetsDirectory, { "recursive": true });
+		resolve();
+	});
+}));
+
+await Promise.all([cacheDirectory, assetsDirectory].map(function(directory) {
+	return new Promise<void>(async function(resolve, reject) {
+		await fs.mkdir(directory, { "recursive": true });
+
+		resolve();
+	});
+}));
 
 // Main Config
 

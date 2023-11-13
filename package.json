@@ -20,9 +20,13 @@
     "eslint": "latest",
     "import-meta-resolve": "latest",
     "json5": "latest",
+    "node-stdlib-browser": "latest",
     "ts-node": "latest",
     "tsup": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "vscode-languageclient": "latest",
+    "vscode-languageserver-textdocument": "latest",
+    "vscode-languageserver": "latest"
   },
   "engines": {
     "node": ">=18.0.0",

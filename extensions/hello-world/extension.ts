@@ -1,21 +1,34 @@
 import * as vscode from "vscode";
+import { LanguageClientOptions } from "vscode-languageclient";
+import { LanguageClient } from "vscode-languageclient/browser";
+
+function createWorkerLanguageClient(context: vscode.ExtensionContext, clientOptions: LanguageClientOptions) {
+	// Create a worker. The worker main file implements the language server.
+	const serverMain = new URL("./server.ts", import.meta.url).toString(); //vscode.Uri.joinPath(context.extensionUri, 'server.js');
+	const worker = new Worker(serverMain.toString());
+
+	// create the language server client to communicate with the server running in the worker
+	return new LanguageClient('lsp-web-extension-sample', 'LSP Web Extension Sample', clientOptions, worker);
+}
 
 export function activate(context: vscode.ExtensionContext) {
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log("Congratulations, your extension \"helloworld-web-sample\" is now active in the web extension host!");
+	const documentSelector = [{ language: 'plaintext' }];
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand("helloworld-web-sample.helloWorld", () => {
-		// The code you place here will be executed every time your command is executed
+	// Options to control the language client
+	const clientOptions: LanguageClientOptions = {
+		documentSelector,
+		synchronize: {},
+		initializationOptions: {}
+	};
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage("Hello World from helloworld-web-sample in a web extension host!");
-	});
+	const client = createWorkerLanguageClient(context, clientOptions);
 
+	const disposable = client.start();
 	context.subscriptions.push(disposable);
+
+	client.onReady().then(() => {
+		console.log('lsp-web-extension-sample server is ready');
+	});
 }
 
 export function deactivate() { }
