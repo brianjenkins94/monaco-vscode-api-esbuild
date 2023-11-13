@@ -142,6 +142,10 @@ const importMetaUrlPlugin = {
 					// Copy it to the assets directory
 					await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 
+					if (importer.endsWith("main.ts")) {
+						return "\"./assets/" + baseName + "\"";
+					}
+
 					// So that we can refer to it by its unique name.
 					return "\"./" + baseName + "\"";
 				});
