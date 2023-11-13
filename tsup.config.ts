@@ -91,7 +91,13 @@ const importMetaUrlPlugin = {
 							}
 						});
 
-						return "\"./assets/" + baseName + ".js\"";
+						baseName += ".js";
+
+						if (importer.endsWith("main.ts")) {
+							return "\"./assets/" + baseName + "\"";
+						}
+
+						return "\"./" + baseName + "\"";
 					}
 
 					// TODO: Improve
