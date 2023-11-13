@@ -75,7 +75,6 @@ const importMetaUrlPlugin = {
 						baseName = path.basename(baseName, extension);
 
 						baseName = baseName + "-" + hash;
-						match = "./assets/" + baseName + ".js";
 
 						await tsup({
 							"config": false, // Is this needed?
@@ -95,38 +94,44 @@ const importMetaUrlPlugin = {
 						filePath = path.join(assetsDirectory, baseName + ".js");
 					}
 
+					// TODO: Improve
 					if (!existsSync(filePath)) {
-						const fallbackPath = path.join(__dirname, "monaco-vscode-api", "demo", "node_modules", match);
+						const fallbackPaths = [
+							path.join(__dirname, "monaco-vscode-api", "demo", "node_modules", match),
+							path.join(__dirname, "monaco-vscode-api", "demo", "node_modules", "vscode", match)
+						];
 
-						// TODO: Improve
-						if (existsSync(fallbackPath)) {
+						for (const fallbackPath of fallbackPaths) {
+							if (!existsSync(fallbackPath)) {
+								continue;
+							}
+
 							filePath = fallbackPath;
 							baseName = path.basename(filePath);
-							match = "./" + baseName;
 
+							// Caching opportunity here:
+							const file = await fs.readFile(filePath);
+
+							const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
+
+							const extension = path.extname(baseName);
+							baseName = path.basename(baseName, extension);
+
+							baseName = baseName + "-" + hash + extension;
+
+							// Copy it to the assets directory
 							await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
-						} else {
-							const fallbackPath = path.join(__dirname, "monaco-vscode-api", "demo", "node_modules", "vscode", match);
 
-							if (existsSync(fallbackPath)) {
-								filePath = fallbackPath;
-								baseName = path.basename(filePath);
-								match = "./" + baseName;
-
-								await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
-							} else {
-								throw new Error("This should never happen.");
-							}
+							return "\"./" + baseName + "\"";
 						}
+
+						throw new Error("This should never happen.");
 					}
 
 					switch (true) {
 						case filePath.endsWith(".code-snippets"):
 							baseName += ".json";
 							break;
-						case filePath.endsWith(".js"):
-						case filePath.endsWith(".map"):
-							return "\"" + match + "\"";
 						case filePath.endsWith(".json"):
 							await fs.writeFile(filePath, JSON.stringify(JSON5.parse(await fs.readFile(filePath, { "encoding": "utf8" }) || "{}"), undefined, "\t") + "\n");
 							break;
@@ -141,29 +146,21 @@ const importMetaUrlPlugin = {
 						default:
 					}
 
-					try {
-						// Caching opportunity here:
-						const file = await fs.readFile(filePath);
+					// Caching opportunity here:
+					const file = await fs.readFile(filePath);
 
-						// If it's JSON-like
-						JSON.parse(file.toString("utf8"));
+					const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
 
-						const hash = createHash("sha256").update(file).digest("hex").substring(0, 6);
+					const extension = path.extname(baseName);
+					baseName = path.basename(baseName, extension);
 
-						const extension = path.extname(baseName);
-						baseName = path.basename(baseName, extension);
+					baseName = baseName + "-" + hash + extension;
 
-						baseName = baseName + "-" + hash + extension;
+					// Copy it to the assets directory
+					await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 
-						// Copy it to the assets directory
-						await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
-
-						// So that we can refer to it by its unique name.
-						return "\"" + (path.relative(importer, filePath).split(/\\+|\//gu).length > 2 ? "./assets/" : "./") + baseName + "\"";
-					} catch (error) {
-						// Otherwise, leave it unchanged.
-						return "\"" + match + "\"";
-					}
+					// So that we can refer to it by its unique name.
+					return "\"" + (path.relative(importer, filePath).split(/\\+|\//gu).length > 2 ? "./assets/" : "./") + baseName + "\"";
 				});
 
 				return {
