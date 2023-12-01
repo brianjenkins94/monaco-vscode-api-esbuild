@@ -2,20 +2,21 @@
 
 // SOURCE: https://github.com/CodinGame/monaco-vscode-api/blob/main/demo/src/setup.ts
 
-import { getService, initialize as initializeMonacoService, IStorageService, LogLevel } from "vscode/services";
+import { IStorageService, LogLevel, getService, initialize as initializeMonacoService } from "vscode/services";
 import { ExtensionHostKind, initialize as initializeVscodeExtensions, registerExtension } from "vscode/extensions";
 
 import getModelServiceOverride from "@codingame/monaco-vscode-model-service-override";
 import getNotificationServiceOverride from "@codingame/monaco-vscode-notifications-service-override";
 import getDialogsServiceOverride from "@codingame/monaco-vscode-dialogs-service-override";
-import getConfigurationServiceOverride, { initUserConfiguration, IStoredWorkspace } from "@codingame/monaco-vscode-configuration-service-override";
+import getConfigurationServiceOverride, { IStoredWorkspace, initUserConfiguration } from "@codingame/monaco-vscode-configuration-service-override";
 import getKeybindingsServiceOverride, { initUserKeybindings } from "@codingame/monaco-vscode-keybindings-service-override";
 import getTextmateServiceOverride from "@codingame/monaco-vscode-textmate-service-override";
 import getThemeServiceOverride from "@codingame/monaco-vscode-theme-service-override";
 import getLanguagesServiceOverride from "@codingame/monaco-vscode-languages-service-override";
 import getAudioCueServiceOverride from "@codingame/monaco-vscode-audio-cue-service-override";
 import getExtensionGalleryServiceOverride from "@codingame/monaco-vscode-extension-gallery-service-override";
-import getViewsServiceOverride, { attachPart, IReference, IResolvedTextEditorModel, isEditorPartVisible, isPartVisibile as isPartVisible, onPartVisibilityChange, OpenEditor, Parts } from "@codingame/monaco-vscode-views-service-override";
+import type { IReference, IResolvedTextEditorModel, OpenEditor } from "@codingame/monaco-vscode-views-service-override";
+import getViewsServiceOverride, { Parts, attachPart, isEditorPartVisible, isPartVisibile as isPartVisible, onPartVisibilityChange } from "@codingame/monaco-vscode-views-service-override";
 import getBannerServiceOverride from "@codingame/monaco-vscode-view-banner-service-override";
 import getStatusBarServiceOverride from "@codingame/monaco-vscode-view-status-bar-service-override";
 import getTitleBarServiceOverride from "@codingame/monaco-vscode-view-title-bar-service-override";
@@ -24,7 +25,8 @@ import getPreferencesServiceOverride from "@codingame/monaco-vscode-preferences-
 import getSnippetServiceOverride from "@codingame/monaco-vscode-snippets-service-override";
 import getQuickAccessServiceOverride from "@codingame/monaco-vscode-quickaccess-service-override";
 import getOutputServiceOverride from "@codingame/monaco-vscode-output-service-override";
-import getTerminalServiceOverride, { ITerminalChildProcess, SimpleTerminalBackend, SimpleTerminalProcess } from "@codingame/monaco-vscode-terminal-service-override";
+import type { ITerminalChildProcess } from "@codingame/monaco-vscode-terminal-service-override";
+import getTerminalServiceOverride, { SimpleTerminalBackend, SimpleTerminalProcess } from "@codingame/monaco-vscode-terminal-service-override";
 import getSearchServiceOverride from "@codingame/monaco-vscode-search-service-override";
 import getMarkersServiceOverride from "@codingame/monaco-vscode-markers-service-override";
 import getAccessibilityServiceOverride from "@codingame/monaco-vscode-accessibility-service-override";
@@ -52,12 +54,10 @@ import * as vscode from "vscode";
 // monaco-vscode-api/demo/src/features/editor.ts
 import { createConfiguredEditor, createModelReference } from "vscode/monaco";
 
-let currentEditor:
-	| ({
-		modelRef: IReference<IResolvedTextEditorModel>;
-		editor: monaco.editor.IStandaloneCodeEditor;
-	} & monaco.IDisposable)
-	| null = null;
+let currentEditor: (monaco.IDisposable & {
+	modelRef: IReference<IResolvedTextEditorModel>;
+	editor: monaco.editor.IStandaloneCodeEditor;
+}) | null = null;
 
 const openNewCodeEditor: OpenEditor = async (modelRef) => {
 	if (currentEditor != null) {
@@ -67,20 +67,20 @@ const openNewCodeEditor: OpenEditor = async (modelRef) => {
 	const container = document.createElement("div");
 	container.style.position = "fixed";
 	container.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-	container.style.top =
-		container.style.bottom =
-		container.style.left =
-		container.style.right =
-			"0";
+	container.style.top = "0";
+	container.style.bottom = "0";
+	container.style.left = "0";
+	container.style.right = "0";
+
 	container.style.cursor = "pointer";
 
 	const editorElem = document.createElement("div");
 	editorElem.style.position = "absolute";
-	editorElem.style.top =
-		editorElem.style.bottom =
-		editorElem.style.left =
-		editorElem.style.right =
-			"0";
+	editorElem.style.top = "0";
+	editorElem.style.bottom = "0";
+	editorElem.style.left = "0";
+	editorElem.style.right = "0";
+
 	editorElem.style.margin = "auto";
 	editorElem.style.width = "80%";
 	editorElem.style.height = "80%";
@@ -94,8 +94,8 @@ const openNewCodeEditor: OpenEditor = async (modelRef) => {
 			{
 				model: modelRef.object.textEditorModel,
 				readOnly: true,
-				automaticLayout: true,
-			},
+				automaticLayout: true
+			}
 		);
 
 		currentEditor = {
@@ -105,8 +105,8 @@ const openNewCodeEditor: OpenEditor = async (modelRef) => {
 				document.body.removeChild(container);
 				currentEditor = null;
 			},
-			modelRef,
-			editor,
+			modelRef: modelRef,
+			editor: editor
 		};
 
 		editor.onDidBlurEditorWidget(() => {
@@ -177,7 +177,7 @@ class TerminalBackend extends SimpleTerminalBackend {
 				console.log("resize", cols, rows);
 			}
 
-			override clearBuffer(): void | Promise<void> {
+			override clearBuffer(): Promise<void> | void {
 			}
 		}
 		return new FakeTerminalProcess(1, 1, "/tmp", dataEmitter.event);
@@ -190,11 +190,11 @@ const workerLoaders = {
 	"editorWorkerService": () => new EditorWorker(),
 	"textMateWorker": () => new TextMateWorker(),
 	"outputLinkComputer": () => new OutputLinkComputerWorker(),
-	"languageDetectionWorkerService": () => new LanguageDetectionWorker(),
+	"languageDetectionWorkerService": () => new LanguageDetectionWorker()
 };
 
 window.MonacoEnvironment = {
-	"getWorker": function (moduleId, label) {
+	"getWorker": function(moduleId, label) {
 		const workerFactory = workerLoaders[label];
 
 		if (workerFactory !== undefined) {
@@ -202,12 +202,12 @@ window.MonacoEnvironment = {
 		}
 
 		throw new Error(`Unimplemented worker ${label} (${moduleId})`);
-	},
+	}
 };
 
 // Override services
 await initUserConfiguration({
-	"workbench.colorTheme": "Default Light+",
+	"workbench.colorTheme": "Default Light+"
 });
 
 await initializeMonacoService(
@@ -230,8 +230,8 @@ await initializeMonacoService(
 			...state,
 			editor: {
 				...state.editor,
-				restoreEditors: true,
-			},
+				restoreEditors: true
+			}
 		})),
 		...getBannerServiceOverride(),
 		...getStatusBarServiceOverride(),
@@ -239,7 +239,7 @@ await initializeMonacoService(
 		...getSnippetServiceOverride(),
 		...getQuickAccessServiceOverride({
 			isKeybindingConfigurationVisible: isEditorPartVisible,
-			shouldUseGlobalPicker: (_editor, isStandalone) => !isStandalone && isEditorPartVisible(),
+			shouldUseGlobalPicker: (_editor, isStandalone) => !isStandalone && isEditorPartVisible()
 		}),
 		...getOutputServiceOverride(),
 		...getTerminalServiceOverride(new TerminalBackend()),
@@ -252,18 +252,18 @@ await initializeMonacoService(
 		...getLifecycleServiceOverride(),
 		...getEnvironmentServiceOverride(),
 		...getWorkspaceTrustOverride(),
-		...getWorkingCopyServiceOverride(),
+		...getWorkingCopyServiceOverride()
 	},
 	document.body,
 	{
 		"enableWorkspaceTrust": false,
 		"developmentOptions": {
-			"logLevel": LogLevel.Info, // Default value
+			"logLevel": LogLevel.Info // Default value
 		},
 		workspaceProvider: {
 			trusted: true,
-			async open () {
-				return false
+			open: async function() {
+				return false;
 			},
 			"workspace": {
 				"folderUri": monaco.Uri.file("/tmp")
@@ -276,7 +276,7 @@ await initializeMonacoService(
 				"resourceUrlTemplate": "https://open-vsx.org/vscode/unpkg/{publisher}/{name}/{version}/{path}",
 				"controlUrl": "",
 				"nlsBaseUrl": "",
-				"publisherUrl": "",
+				"publisherUrl": ""
 			}
 		}
 	}
@@ -293,7 +293,7 @@ for (
 		{ "part": Parts.PANEL_PART, "element": "#console" },
 		{ "part": Parts.EDITOR_PART, "element": "#editors" },
 		{ "part": Parts.STATUSBAR_PART, "element": "#statusBar" },
-		{ "part": Parts.AUXILIARYBAR_PART, "element": "#auxbar" },
+		{ "part": Parts.AUXILIARYBAR_PART, "element": "#auxbar" }
 	]
 ) {
 	const el = document.querySelector<HTMLDivElement>(element)!;
@@ -359,36 +359,36 @@ const { registerFileUrl, getApi } = registerExtension({
 	publisher: "codingame",
 	version: "1.0.0",
 	engines: {
-		vscode: "*",
+		vscode: "*"
 	},
-	enabledApiProposals: ["fileSearchProvider", "textSearchProvider"],
+	enabledApiProposals: ["fileSearchProvider", "textSearchProvider"]
 }, ExtensionHostKind.LocalProcess);
 
 const api = await getApi();
 
 api.workspace.registerFileSearchProvider("file", {
-	async provideFileSearchResults() {
+	provideFileSearchResults: async function() {
 		return monaco.editor.getModels().map((model) => model.uri).filter((uri) => uri.scheme === "file");
-	},
+	}
 });
 api.workspace.registerTextSearchProvider("file", {
-	async provideTextSearchResults(query, _, progress) {
+	provideTextSearchResults: async function(query, _, progress) {
 		for (const model of monaco.editor.getModels()) {
 			const matches = model.findMatches(query.pattern, false, query.isRegExp ?? false, query.isCaseSensitive ?? false, query.isWordMatch ?? false ? " " : null, true);
 			if (matches.length > 0) {
 				const ranges = matches.map((match) => new api.Range(match.range.startLineNumber, match.range.startColumn, match.range.endLineNumber, match.range.endColumn));
 				progress.report({
 					uri: model.uri,
-					ranges,
+					ranges: ranges,
 					preview: {
 						text: model.getValue(),
-						matches: ranges,
-					},
+						matches: ranges
+					}
 				});
 			}
 		}
 		return {};
-	},
+	}
 });
 
 // monaco-vscode-api/demo/src/features/filesystem.ts

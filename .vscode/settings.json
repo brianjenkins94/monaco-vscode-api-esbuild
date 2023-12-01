@@ -1,8 +1,15 @@
 {
 	"[javascript][javascriptreact][typescript][typescriptreact]": {
+		"editor.codeActionsOnSave": {
+			"source.fixAll.eslint":true
+		},
 		"editor.formatOnSave": true
 	},
 	"editor.formatOnSave": false,
+	"eslint.execArgv": ["--max-old-space-size=16384"],
+	"eslint.experimental.useFlatConfig": true,
+	"eslint.format.enable": true,
+	"eslint.runtime": "node",
 	"files.insertFinalNewline": true,
 	"files.trimTrailingWhitespace": true,
 	"javascript.format.insertSpaceAfterFunctionKeywordForAnonymousFunctions": false,
