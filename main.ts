@@ -25,10 +25,6 @@ await vscode.window.showTextDocument(mainDocument, {
 	"preview": false
 });
 
-await createModelReference(monaco.Uri.from({ "scheme": "user", "path": "/settings.json" }), JSON.stringify({
-	"workbench.colorTheme": "Default Light+"
-}, undefined, "\t"));
-
 globalThis.monaco = monaco;
 globalThis.vscode = vscode;
 

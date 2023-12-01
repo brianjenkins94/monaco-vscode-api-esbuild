@@ -19,8 +19,8 @@
 			"dom.iterable",
 			"esnext"
 		],
-		"module": "ESNext",
-		"moduleResolution": "Node",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
 		"noEmit": true,
 		//"noImplicitAny": true,
 		"noImplicitOverride": true,

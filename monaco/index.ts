@@ -2,20 +2,20 @@
 
 // SOURCE: https://github.com/CodinGame/monaco-vscode-api/blob/main/demo/src/setup.ts
 
-import { IStorageService, LogLevel, getService, initialize as initializeMonacoService } from "vscode/services"
-import { ExtensionHostKind, registerExtension, initialize as initializeVscodeExtensions } from "vscode/extensions"
+import { getService, initialize as initializeMonacoService, IStorageService, LogLevel } from "vscode/services";
+import { ExtensionHostKind, initialize as initializeVscodeExtensions, registerExtension } from "vscode/extensions";
 
 import getModelServiceOverride from "@codingame/monaco-vscode-model-service-override";
 import getNotificationServiceOverride from "@codingame/monaco-vscode-notifications-service-override";
 import getDialogsServiceOverride from "@codingame/monaco-vscode-dialogs-service-override";
-import getConfigurationServiceOverride, { IStoredWorkspace, initUserConfiguration } from "@codingame/monaco-vscode-configuration-service-override";
+import getConfigurationServiceOverride, { initUserConfiguration, IStoredWorkspace } from "@codingame/monaco-vscode-configuration-service-override";
 import getKeybindingsServiceOverride, { initUserKeybindings } from "@codingame/monaco-vscode-keybindings-service-override";
 import getTextmateServiceOverride from "@codingame/monaco-vscode-textmate-service-override";
 import getThemeServiceOverride from "@codingame/monaco-vscode-theme-service-override";
 import getLanguagesServiceOverride from "@codingame/monaco-vscode-languages-service-override";
 import getAudioCueServiceOverride from "@codingame/monaco-vscode-audio-cue-service-override";
 import getExtensionGalleryServiceOverride from "@codingame/monaco-vscode-extension-gallery-service-override";
-import getViewsServiceOverride, { IResolvedTextEditorModel, IReference, OpenEditor, isEditorPartVisible, Parts, onPartVisibilityChange, isPartVisibile as isPartVisible, attachPart } from "@codingame/monaco-vscode-views-service-override";
+import getViewsServiceOverride, { attachPart, IReference, IResolvedTextEditorModel, isEditorPartVisible, isPartVisibile as isPartVisible, onPartVisibilityChange, OpenEditor, Parts } from "@codingame/monaco-vscode-views-service-override";
 import getBannerServiceOverride from "@codingame/monaco-vscode-view-banner-service-override";
 import getStatusBarServiceOverride from "@codingame/monaco-vscode-view-status-bar-service-override";
 import getTitleBarServiceOverride from "@codingame/monaco-vscode-view-title-bar-service-override";
@@ -36,6 +36,8 @@ import getEnvironmentServiceOverride from "@codingame/monaco-vscode-environment-
 import getLifecycleServiceOverride from "@codingame/monaco-vscode-lifecycle-service-override";
 import getWorkspaceTrustOverride from "@codingame/monaco-vscode-workspace-trust-service-override";
 import getLogServiceOverride from "@codingame/monaco-vscode-log-service-override";
+import { RegisteredFileSystemProvider, registerFileSystemOverlay } from "@codingame/monaco-vscode-files-service-override";
+import getWorkingCopyServiceOverride from "@codingame/monaco-vscode-working-copy-service-override";
 
 import OutputLinkComputerWorker from "@codingame/monaco-vscode-output-service-override/worker?worker";
 import TextMateWorker from "@codingame/monaco-vscode-textmate-service-override/worker?worker";
@@ -50,126 +52,136 @@ import * as vscode from "vscode";
 // monaco-vscode-api/demo/src/features/editor.ts
 import { createConfiguredEditor, createModelReference } from "vscode/monaco";
 
-let currentEditor: ({
-	modelRef: IReference<IResolvedTextEditorModel>
-	editor: monaco.editor.IStandaloneCodeEditor
-} & monaco.IDisposable) | null = null
+let currentEditor:
+	| ({
+		modelRef: IReference<IResolvedTextEditorModel>;
+		editor: monaco.editor.IStandaloneCodeEditor;
+	} & monaco.IDisposable)
+	| null = null;
 
 const openNewCodeEditor: OpenEditor = async (modelRef) => {
 	if (currentEditor != null) {
-		currentEditor.dispose()
-		currentEditor = null
+		currentEditor.dispose();
+		currentEditor = null;
 	}
-	const container = document.createElement("div")
-	container.style.position = "fixed"
-	container.style.backgroundColor = "rgba(0, 0, 0, 0.5)"
-	container.style.top = container.style.bottom = container.style.left = container.style.right = "0"
-	container.style.cursor = "pointer"
+	const container = document.createElement("div");
+	container.style.position = "fixed";
+	container.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+	container.style.top =
+		container.style.bottom =
+		container.style.left =
+		container.style.right =
+			"0";
+	container.style.cursor = "pointer";
 
-	const editorElem = document.createElement("div")
-	editorElem.style.position = "absolute"
-	editorElem.style.top = editorElem.style.bottom = editorElem.style.left = editorElem.style.right = "0"
-	editorElem.style.margin = "auto"
-	editorElem.style.width = "80%"
-	editorElem.style.height = "80%"
+	const editorElem = document.createElement("div");
+	editorElem.style.position = "absolute";
+	editorElem.style.top =
+		editorElem.style.bottom =
+		editorElem.style.left =
+		editorElem.style.right =
+			"0";
+	editorElem.style.margin = "auto";
+	editorElem.style.width = "80%";
+	editorElem.style.height = "80%";
 
-	container.appendChild(editorElem)
+	container.appendChild(editorElem);
 
-	document.body.appendChild(container)
+	document.body.appendChild(container);
 	try {
 		const editor = createConfiguredEditor(
 			editorElem,
 			{
 				model: modelRef.object.textEditorModel,
 				readOnly: true,
-				automaticLayout: true
-			}
-		)
+				automaticLayout: true,
+			},
+		);
 
 		currentEditor = {
 			dispose: () => {
-				editor.dispose()
-				modelRef.dispose()
-				document.body.removeChild(container)
-				currentEditor = null
+				editor.dispose();
+				modelRef.dispose();
+				document.body.removeChild(container);
+				currentEditor = null;
 			},
 			modelRef,
-			editor
-		}
+			editor,
+		};
 
 		editor.onDidBlurEditorWidget(() => {
-			currentEditor?.dispose()
-		})
+			currentEditor?.dispose();
+		});
 		container.addEventListener("mousedown", (event) => {
 			if (event.target !== container) {
-				return
+				return;
 			}
 
-			currentEditor?.dispose()
-		})
+			currentEditor?.dispose();
+		});
 
-		return editor
+		return editor;
 	} catch (error) {
-		document.body.removeChild(container)
-		currentEditor = null
-		throw error
+		document.body.removeChild(container);
+		currentEditor = null;
+		throw error;
 	}
-}
+};
 
 // monaco-vscode-api/demo/src/features/terminal.ts
 class TerminalBackend extends SimpleTerminalBackend {
-	override getDefaultSystemShell = async (): Promise<string> => "fake"
+	override getDefaultSystemShell = async (): Promise<string> => "fake";
 	override createProcess = async (): Promise<ITerminalChildProcess> => {
-		const dataEmitter = new vscode.EventEmitter<string>()
+		const dataEmitter = new vscode.EventEmitter<string>();
 		const propertyEmitter = new vscode.EventEmitter<{
-			type: string
-			value: string
-		}>()
+			type: string;
+			value: string;
+		}>();
 		class FakeTerminalProcess extends SimpleTerminalProcess {
-			private column = 0
+			private column = 0;
 			async start(): Promise<undefined> {
 				//ansiColors.enabled = true
 				//dataEmitter.fire(`This is a fake terminal\r\n${ansiColors.green("$")} `)
 				setTimeout(() => {
-					dataEmitter.fire("\u001B]0;Fake terminal title\u0007")
-				}, 0)
-				this.column = 2
+					dataEmitter.fire("\u001B]0;Fake terminal title\u0007");
+				}, 0);
+				this.column = 2;
 
-				return undefined
+				return undefined;
 			}
 
-			override onDidChangeProperty = propertyEmitter.event
+			override onDidChangeProperty = propertyEmitter.event;
 
 			override shutdown(immediate: boolean): void {
-				console.log("shutdown", immediate)
+				console.log("shutdown", immediate);
 			}
 
 			override input(data: string): void {
 				for (const c of data) {
 					if (c.charCodeAt(0) === 13) {
 						//dataEmitter.fire(`\r\n${ansiColors.green("$")} `)
-						this.column = 2
+						this.column = 2;
 					} else if (c.charCodeAt(0) === 127) {
 						if (this.column > 2) {
-							dataEmitter.fire("\b \b")
-							this.column--
+							dataEmitter.fire("\b \b");
+							this.column--;
 						}
 					} else {
-						dataEmitter.fire(c)
-						this.column++
+						dataEmitter.fire(c);
+						this.column++;
 					}
 				}
 			}
 
 			resize(cols: number, rows: number): void {
-				console.log("resize", cols, rows)
+				console.log("resize", cols, rows);
 			}
 
 			override clearBuffer(): void | Promise<void> {
 			}
 		}
-		return new FakeTerminalProcess(1, 1, "/tmp", dataEmitter.event)
-	}
+		return new FakeTerminalProcess(1, 1, "/tmp", dataEmitter.event);
+	};
 }
 
 // Workers
@@ -178,11 +190,11 @@ const workerLoaders = {
 	"editorWorkerService": () => new EditorWorker(),
 	"textMateWorker": () => new TextMateWorker(),
 	"outputLinkComputer": () => new OutputLinkComputerWorker(),
-	"languageDetectionWorkerService": () => new LanguageDetectionWorker()
+	"languageDetectionWorkerService": () => new LanguageDetectionWorker(),
 };
 
 window.MonacoEnvironment = {
-	"getWorker": function(moduleId, label) {
+	"getWorker": function (moduleId, label) {
 		const workerFactory = workerLoaders[label];
 
 		if (workerFactory !== undefined) {
@@ -190,13 +202,17 @@ window.MonacoEnvironment = {
 		}
 
 		throw new Error(`Unimplemented worker ${label} (${moduleId})`);
-	}
+	},
 };
 
 // Override services
 const remotePath = null;
 const remoteAuthority = null;
 const connectionToken = undefined;
+
+await initUserConfiguration({
+	"workbench.colorTheme": "Default Light+",
+});
 
 /*
 const userFileSystemProvider = new RegisteredFileSystemProvider(false);
@@ -208,106 +224,105 @@ userFileSystemProvider.registerFile(new RegisteredMemoryFile(monaco.Uri.from({ "
 }, undefined, "\t")));
 */
 
-await initializeMonacoService({
-	...getLogServiceOverride(),
-	...getExtensionServiceOverride(ExtensionHostWorker),
-	...getExtensionGalleryServiceOverride({ webOnly: false }),
-	...getModelServiceOverride(),
-	...getNotificationServiceOverride(),
-	...getDialogsServiceOverride(),
-	...getConfigurationServiceOverride(),
-	...getKeybindingsServiceOverride(),
-	...getTextmateServiceOverride(),
-	...getThemeServiceOverride(),
-	...getLanguagesServiceOverride(),
-	...getAudioCueServiceOverride(),
-	...getDebugServiceOverride(),
-	...getPreferencesServiceOverride(),
-	...getViewsServiceOverride(openNewCodeEditor, undefined, state => ({
-		...state,
-		editor: {
-			...state.editor,
-			restoreEditors: true
-		}
-	})),
-	...getBannerServiceOverride(),
-	...getStatusBarServiceOverride(),
-	...getTitleBarServiceOverride(),
-	...getSnippetServiceOverride(),
-	...getQuickAccessServiceOverride({
-		isKeybindingConfigurationVisible: isEditorPartVisible,
-		shouldUseGlobalPicker: (_editor, isStandalone) => !isStandalone && isEditorPartVisible()
-	}),
-	...getOutputServiceOverride(),
-	...getTerminalServiceOverride(new TerminalBackend()),
-	...getSearchServiceOverride(),
-	...getMarkersServiceOverride(),
-	...getAccessibilityServiceOverride(),
-	...getLanguageDetectionWorkerServiceOverride(),
-	...getStorageServiceOverride(),
-	...getRemoteAgentServiceOverride(connectionToken),
-	...getLifecycleServiceOverride(),
-	...getEnvironmentServiceOverride(),
-	...getWorkspaceTrustOverride(),
-	...getWorkingCopyServiceOverride()
-}, document.body, {
-	remoteAuthority,
-	enableWorkspaceTrust: true,
-	workspaceProvider: {
-		trusted: true,
-		async open() {
-			return false
+await initializeMonacoService(
+	{
+		...getLogServiceOverride(),
+		...getExtensionServiceOverride(ExtensionHostWorker),
+		...getExtensionGalleryServiceOverride({ webOnly: false }),
+		...getModelServiceOverride(),
+		...getNotificationServiceOverride(),
+		...getDialogsServiceOverride(),
+		...getConfigurationServiceOverride(),
+		...getKeybindingsServiceOverride(),
+		...getTextmateServiceOverride(),
+		...getThemeServiceOverride(),
+		...getLanguagesServiceOverride(),
+		...getAudioCueServiceOverride(),
+		...getDebugServiceOverride(),
+		...getPreferencesServiceOverride(),
+		...getViewsServiceOverride(openNewCodeEditor, undefined, (state) => ({
+			...state,
+			editor: {
+				...state.editor,
+				restoreEditors: true,
+			},
+		})),
+		...getBannerServiceOverride(),
+		...getStatusBarServiceOverride(),
+		...getTitleBarServiceOverride(),
+		...getSnippetServiceOverride(),
+		...getQuickAccessServiceOverride({
+			isKeybindingConfigurationVisible: isEditorPartVisible,
+			shouldUseGlobalPicker: (_editor, isStandalone) => !isStandalone && isEditorPartVisible(),
+		}),
+		...getOutputServiceOverride(),
+		...getTerminalServiceOverride(new TerminalBackend()),
+		...getSearchServiceOverride(),
+		...getMarkersServiceOverride(),
+		...getAccessibilityServiceOverride(),
+		...getLanguageDetectionWorkerServiceOverride(),
+		...getStorageServiceOverride(),
+		...getRemoteAgentServiceOverride(connectionToken),
+		...getLifecycleServiceOverride(),
+		...getEnvironmentServiceOverride(),
+		...getWorkspaceTrustOverride(),
+		...getWorkingCopyServiceOverride(),
+	},
+	document.body,
+	{
+		"remoteAuthority": remoteAuthority,
+		"enableWorkspaceTrust": false,
+		"workspaceProvider": {
+			"trusted": true,
+			async open() {
+				return false;
+			}
 		},
-		workspace: remotePath == null
-			? {
-				workspaceUri: workspaceFile
-			}
-			: {
-				folderUri: monaco.Uri.from({ scheme: "vscode-remote", path: remotePath, authority: remoteAuthority })
-			}
+		"developmentOptions": {
+			"logLevel": LogLevel.Info, // Default value
+		},
+		"defaultLayout": {
+			"editors": [{
+				"uri": monaco.Uri.file("/tmp/test.js"),
+				"viewColumn": 1,
+			}, {
+				"uri": monaco.Uri.file("/tmp/test.css"),
+				"viewColumn": 2,
+			}],
+			"layout": {
+				"editors": {
+					"orientation": 0,
+					"groups": [{ "size": 1 }, { "size": 1 }],
+				},
+			},
+		},
+		productConfiguration: {
+			extensionsGallery: {
+				serviceUrl: "https://open-vsx.org/vscode/gallery",
+				itemUrl: "https://open-vsx.org/vscode/item",
+				resourceUrlTemplate: "https://open-vsx.org/vscode/unpkg/{publisher}/{name}/{version}/{path}",
+				controlUrl: "",
+				nlsBaseUrl: "",
+				publisherUrl: "",
+			},
+		},
 	},
-	developmentOptions: {
-		logLevel: LogLevel.Info // Default value
-	},
-	defaultLayout: {
-		editors: [{
-			uri: monaco.Uri.file("/tmp/test.js"),
-			viewColumn: 1
-		}, {
-			uri: monaco.Uri.file("/tmp/test.css"),
-			viewColumn: 2
-		}],
-		layout: {
-			editors: {
-				orientation: 0,
-				groups: [{ size: 1 }, { size: 1 }]
-			}
-		}
-	},
-	productConfiguration: {
-		extensionsGallery: {
-			serviceUrl: "https://open-vsx.org/vscode/gallery",
-			itemUrl: "https://open-vsx.org/vscode/item",
-			resourceUrlTemplate: "https://open-vsx.org/vscode/unpkg/{publisher}/{name}/{version}/{path}",
-			controlUrl: "",
-			nlsBaseUrl: "",
-			publisherUrl: ""
-		}
-	}
-});
+);
 
 await initializeVscodeExtensions();
 
-for (const { part, element } of [
-	//{ "part": Parts.TITLEBAR_PART, "element": "#titleBar" },
-	//{ "part": Parts.BANNER_PART, "element": "#banner" },
-	{ "part": Parts.SIDEBAR_PART, "element": "#sidebar" },
-	//{ "part": Parts.ACTIVITYBAR_PART, "element": "#activityBar" },
-	{ "part": Parts.PANEL_PART, "element": "#console" },
-	{ "part": Parts.EDITOR_PART, "element": "#editors" },
-	{ "part": Parts.STATUSBAR_PART, "element": "#statusBar" },
-	{ "part": Parts.AUXILIARYBAR_PART, "element": "#auxbar" }
-]) {
+for (
+	const { part, element } of [
+		//{ "part": Parts.TITLEBAR_PART, "element": "#titleBar" },
+		//{ "part": Parts.BANNER_PART, "element": "#banner" },
+		{ "part": Parts.SIDEBAR_PART, "element": "#sidebar" },
+		//{ "part": Parts.ACTIVITYBAR_PART, "element": "#activityBar" },
+		{ "part": Parts.PANEL_PART, "element": "#console" },
+		{ "part": Parts.EDITOR_PART, "element": "#editors" },
+		{ "part": Parts.STATUSBAR_PART, "element": "#statusBar" },
+		{ "part": Parts.AUXILIARYBAR_PART, "element": "#auxbar" },
+	]
+) {
 	const el = document.querySelector<HTMLDivElement>(element)!;
 
 	attachPart(part, el);
@@ -371,50 +386,41 @@ const { registerFileUrl, getApi } = registerExtension({
 	publisher: "codingame",
 	version: "1.0.0",
 	engines: {
-		vscode: "*"
+		vscode: "*",
 	},
-	enabledApiProposals: ["fileSearchProvider", "textSearchProvider"]
-}, ExtensionHostKind.LocalProcess)
+	enabledApiProposals: ["fileSearchProvider", "textSearchProvider"],
+}, ExtensionHostKind.LocalProcess);
 
-const api = await getApi()
+const api = await getApi();
 
 api.workspace.registerFileSearchProvider("file", {
 	async provideFileSearchResults() {
-		return monaco.editor.getModels().map(model => model.uri).filter(uri => uri.scheme === "file")
-	}
-})
+		return monaco.editor.getModels().map((model) => model.uri).filter((uri) => uri.scheme === "file");
+	},
+});
 api.workspace.registerTextSearchProvider("file", {
 	async provideTextSearchResults(query, _, progress) {
 		for (const model of monaco.editor.getModels()) {
-			const matches = model.findMatches(query.pattern, false, query.isRegExp ?? false, query.isCaseSensitive ?? false, query.isWordMatch ?? false ? " " : null, true)
+			const matches = model.findMatches(query.pattern, false, query.isRegExp ?? false, query.isCaseSensitive ?? false, query.isWordMatch ?? false ? " " : null, true);
 			if (matches.length > 0) {
-				const ranges = matches.map(match => new api.Range(match.range.startLineNumber, match.range.startColumn, match.range.endLineNumber, match.range.endColumn))
+				const ranges = matches.map((match) => new api.Range(match.range.startLineNumber, match.range.startColumn, match.range.endLineNumber, match.range.endColumn));
 				progress.report({
 					uri: model.uri,
 					ranges,
 					preview: {
 						text: model.getValue(),
-						matches: ranges
-					}
-				})
+						matches: ranges,
+					},
+				});
 			}
 		}
-		return {}
-	}
-})
+		return {};
+	},
+});
 
-// monaco-vscode-api/demo/src/features/filesystem";
-import { RegisteredFileSystemProvider, registerFileSystemOverlay } from "@codingame/monaco-vscode-files-service-override";
+// monaco-vscode-api/demo/src/features/filesystem.ts
+const fileSystemProvider = new RegisteredFileSystemProvider(false);
 
-const fileSystemProvider = new RegisteredFileSystemProvider(false)
+registerFileSystemOverlay(1, fileSystemProvider);
 
-registerFileSystemOverlay(1, fileSystemProvider)
-
-export {
-	createModelReference,
-	ExtensionHostKind,
-	monaco,
-	registerExtension,
-	registerFileUrl,
-	vscode
-};
+export { createModelReference, ExtensionHostKind, monaco, registerExtension, registerFileUrl, vscode };
