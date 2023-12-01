@@ -206,23 +206,9 @@ window.MonacoEnvironment = {
 };
 
 // Override services
-const remotePath = null;
-const remoteAuthority = null;
-const connectionToken = undefined;
-
 await initUserConfiguration({
 	"workbench.colorTheme": "Default Light+",
 });
-
-/*
-const userFileSystemProvider = new RegisteredFileSystemProvider(false);
-
-registerCustomProvider("user-store", userFileSystemProvider);
-
-userFileSystemProvider.registerFile(new RegisteredMemoryFile(monaco.Uri.from({ "scheme": "user-store", "path": "/User/settings.json" }), JSON.stringify({
-	"workbench.colorTheme": "Default Light+"
-}, undefined, "\t")));
-*/
 
 await initializeMonacoService(
 	{
@@ -262,7 +248,7 @@ await initializeMonacoService(
 		...getAccessibilityServiceOverride(),
 		...getLanguageDetectionWorkerServiceOverride(),
 		...getStorageServiceOverride(),
-		...getRemoteAgentServiceOverride(connectionToken),
+		...getRemoteAgentServiceOverride(),
 		...getLifecycleServiceOverride(),
 		...getEnvironmentServiceOverride(),
 		...getWorkspaceTrustOverride(),
@@ -270,43 +256,30 @@ await initializeMonacoService(
 	},
 	document.body,
 	{
-		"remoteAuthority": remoteAuthority,
 		"enableWorkspaceTrust": false,
-		"workspaceProvider": {
-			"trusted": true,
-			async open() {
-				return false;
-			}
-		},
 		"developmentOptions": {
 			"logLevel": LogLevel.Info, // Default value
 		},
-		"defaultLayout": {
-			"editors": [{
-				"uri": monaco.Uri.file("/tmp/test.js"),
-				"viewColumn": 1,
-			}, {
-				"uri": monaco.Uri.file("/tmp/test.css"),
-				"viewColumn": 2,
-			}],
-			"layout": {
-				"editors": {
-					"orientation": 0,
-					"groups": [{ "size": 1 }, { "size": 1 }],
-				},
+		workspaceProvider: {
+			trusted: true,
+			async open () {
+				return false
 			},
+			"workspace": {
+				"folderUri": monaco.Uri.file("/tmp")
+			}
 		},
-		productConfiguration: {
-			extensionsGallery: {
-				serviceUrl: "https://open-vsx.org/vscode/gallery",
-				itemUrl: "https://open-vsx.org/vscode/item",
-				resourceUrlTemplate: "https://open-vsx.org/vscode/unpkg/{publisher}/{name}/{version}/{path}",
-				controlUrl: "",
-				nlsBaseUrl: "",
-				publisherUrl: "",
-			},
-		},
-	},
+		"productConfiguration": {
+			"extensionsGallery": {
+				"serviceUrl": "https://open-vsx.org/vscode/gallery",
+				"itemUrl": "https://open-vsx.org/vscode/item",
+				"resourceUrlTemplate": "https://open-vsx.org/vscode/unpkg/{publisher}/{name}/{version}/{path}",
+				"controlUrl": "",
+				"nlsBaseUrl": "",
+				"publisherUrl": "",
+			}
+		}
+	}
 );
 
 await initializeVscodeExtensions();
