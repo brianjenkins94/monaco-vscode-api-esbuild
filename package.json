@@ -6,13 +6,18 @@
   "author": "Brian Jenkins",
   "license": "MIT",
   "scripts": {
-    "build": "tsup --format esm --treeshake --outDir dist/",
-    "postinstall": "./install.sh",
-    "serve": "npx http-server",
+    "build": "tsup --format esm --treeshake --outDir docs/",
+    "postinstall": "chmod 755 ./install.sh && ./install.sh",
+    "serve": "npx http-server docs/",
     "start": "npm run serve"
   },
   "devDependencies": {
-    "@tsconfig/node-lts": "latest"
+    "@tsconfig/node-lts": "latest",
+    "tsup": "latest",
+    "typescript": "latest",
+    "import-meta-resolve": "latest",
+    "json5": "latest",
+    "node-stdlib-browser": "latest"
   },
   "engines": {
     "node": ">=18.0.0",

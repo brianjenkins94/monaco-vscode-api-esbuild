@@ -1,6 +1,32 @@
 {
-	"extends": "../tsconfig.json",
+	"extends": "@tsconfig/node-lts/tsconfig.json",
 	"compilerOptions": {
+		"alwaysStrict": true,
+		//"exactOptionalPropertyTypes": true,
+		"forceConsistentCasingInFileNames": false,
+		"isolatedModules": true,
+		"jsx": "react-jsx",
+		"lib": [
+			"dom",
+			"dom.iterable",
+			"esnext"
+		],
+		"module": "ESNext",
+		"moduleResolution": "Node",
+		"noEmit": true,
+		//"noImplicitAny": true,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
+		//"noImplicitThis": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"resolveJsonModule": true,
+		"strict": false,
+		"strictBindCallApply": true,
+		"strictFunctionTypes": true,
+		//"strictNullChecks": true,
+		//"strictPropertyInitialization": true,
+		//"useUnknownInCatchVariables": true
+		"target": "ESNext",
 		"experimentalDecorators": true
 	}
 }

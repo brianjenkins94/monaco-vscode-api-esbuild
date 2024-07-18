@@ -8,10 +8,10 @@ import JSON5 from "json5";
 import polyfillNode from "node-stdlib-browser/helpers/esbuild/plugin"; // NOT "esbuild-plugins-node-modules-polyfill" OR "esbuild-plugin-polyfill-node"
 import stdLibBrowser from "node-stdlib-browser";
 
-import { esbuildOptions, tsup } from "../util/esbuild";
+import { esbuildOptions, tsup } from "./util/esbuild";
 
 const cacheDirectory = path.join(__dirname, ".cache");
-const distDirectory = path.join(__dirname, "dist");
+const distDirectory = path.join(__dirname, "docs");
 const assetsDirectory = path.join(distDirectory, "assets");
 
 // Handle `new URL("./path/to/asset", import.meta.url)`
@@ -221,7 +221,7 @@ async function manualChunks(chunkAliases: Record<string, string[]>) {
 	})));
 }
 
-await Promise.all([distDirectory, cacheDirectory].map(function(directory) {
+await Promise.all([assetsDirectory, cacheDirectory].map(function(directory) {
 	return new Promise<void>(async function(resolve, reject) {
 		if (existsSync(directory)) {
 			await fs.rm(directory, { "recursive": true, "force": true });
@@ -231,7 +231,7 @@ await Promise.all([distDirectory, cacheDirectory].map(function(directory) {
 	});
 }));
 
-await Promise.all([cacheDirectory, assetsDirectory].map(function(directory) {
+await Promise.all([assetsDirectory, cacheDirectory].map(function(directory) {
 	return new Promise<void>(async function(resolve, reject) {
 		await fs.mkdir(directory, { "recursive": true });
 
