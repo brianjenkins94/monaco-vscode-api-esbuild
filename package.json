@@ -13,11 +13,12 @@
   },
   "devDependencies": {
     "@tsconfig/node-lts": "latest",
-    "tsup": "latest",
-    "typescript": "latest",
+    "@types/node": "latest",
     "import-meta-resolve": "latest",
     "json5": "latest",
-    "node-stdlib-browser": "latest"
+    "node-stdlib-browser": "latest",
+    "tsup": "latest",
+    "typescript": "latest"
   },
   "engines": {
     "node": ">=18.0.0",
