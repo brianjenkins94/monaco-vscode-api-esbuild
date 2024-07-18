@@ -1,39 +1,6 @@
 {
-	"extends": "@tsconfig/node-lts/tsconfig.json",
+	"extends": "../tsconfig.json",
 	"compilerOptions": {
-		"baseUrl": ".",
-		"paths": {
-			"@codingame/*": ["./monaco-vscode-api/demo/node_modules/@codingame/*"],
-			"monaco-editor": ["./monaco-vscode-api/demo/node_modules/monaco-editor"],
-			"monaco-editor/*": ["./monaco-vscode-api/demo/node_modules/monaco-editor/*"],
-			"vscode": ["./monaco-vscode-api/demo/node_modules/vscode"],
-			"vscode/*": ["./monaco-vscode-api/demo/node_modules/vscode/*"]
-		},
-		"alwaysStrict": true,
-		//"exactOptionalPropertyTypes": true,
-		"forceConsistentCasingInFileNames": false,
-		"isolatedModules": true,
-		"jsx": "react-jsx",
-		"lib": [
-			"dom",
-			"dom.iterable",
-			"esnext"
-		],
-		"module": "ESNext",
-		"moduleResolution": "Node",
-		"noEmit": true,
-		//"noImplicitAny": true,
-		"noImplicitOverride": true,
-		"noImplicitReturns": true,
-		//"noImplicitThis": true,
-		"noPropertyAccessFromIndexSignature": true,
-		"resolveJsonModule": true,
-		"strict": false,
-		"strictBindCallApply": true,
-		"strictFunctionTypes": true,
-		//"strictNullChecks": true,
-		//"strictPropertyInitialization": true,
-		//"useUnknownInCatchVariables": true
-		"target": "ESNext"
+		"experimentalDecorators": true
 	}
 }

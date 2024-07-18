@@ -8,25 +8,7 @@ import JSON5 from "json5";
 import polyfillNode from "node-stdlib-browser/helpers/esbuild/plugin"; // NOT "esbuild-plugins-node-modules-polyfill" OR "esbuild-plugin-polyfill-node"
 import stdLibBrowser from "node-stdlib-browser";
 
-function esbuildOptions(options, context) {
-	options.assetNames = "assets/[name]";
-	options.chunkNames = "assets/[name]-[hash]";
-	options.entryNames = "[name]";
-}
-
-async function tsup(options) {
-	return (await import("tsup")).build({
-		"esbuildOptions": esbuildOptions,
-		"esbuildPlugins": [],
-		"format": "esm",
-		"treeshake": true,
-		...options,
-		// WORKAROUND: `tsup` gives the entry straight to `globby` and `globby` doesn't get along with Windows paths.
-		"entry": options.entry.map(function(entry) {
-			return entry.replace(/\\/gu, "/");
-		})
-	});
-}
+import { esbuildOptions, tsup } from "../util/esbuild";
 
 const cacheDirectory = path.join(__dirname, ".cache");
 const distDirectory = path.join(__dirname, "dist");
@@ -34,27 +16,37 @@ const assetsDirectory = path.join(distDirectory, "assets");
 
 // Handle `new URL("./path/to/asset", import.meta.url)`
 
+async function replaceAsync(regex, input, callback = async (execResults: RegExpExecArray) => Promise.resolve(execResults[1])) {
+	regex = new RegExp(regex.source, [...new Set([...regex.flags, "d"])].join(""));
+
+	const output = [];
+
+	let index = input.length;
+	let result;
+
+	for (let origin = 0; result = regex.exec(input); origin = index) {
+		index = result.indices[1][1] + 1;
+
+		output.push(input.substring(origin, result.indices[1][0] - 1), await callback(result));
+	}
+
+	output.push(input.substring(index));
+
+	return output.join("");
+}
+
 const importMetaUrlPlugin = {
 	"name": "import-meta-url",
 	"setup": function(build) {
-		async function replaceAsync(regex, input, callback = async (execResults: RegExpExecArray) => Promise.resolve(execResults[1])) {
-			regex = new RegExp(regex.source, [...new Set([...regex.flags, "d"])].join(""));
+		build.onLoad({ "filter": /.*/u }, async function({ "path": importer }) {
+			const contents = await fs.readFile(importer, { "encoding": "utf8" });
 
-			const output = [];
+			const workerRegEx = /worker(?:\.jsx?|\.tsx?)?(?:\?worker)?/u;
 
-			let index = input.length;
-			let result;
-
-			for (let origin = 0; result = regex.exec(input); origin = index) {
-				index = result.indices[1][1] + 1;
-
-				output.push(input.substring(origin, result.indices[1][0] - 1), await callback(result));
+			if (workerRegEx.test(contents)) {
+				console.log(importer);
 			}
-
-			output.push(input.substring(index));
-
-			return output.join("");
-		}
+		});
 
 		build.onLoad({ "filter": /.*/u }, async function({ "path": importer }) {
 			let contents = await fs.readFile(importer, { "encoding": "utf8" });
@@ -68,6 +60,8 @@ const importMetaUrlPlugin = {
 					let baseName = path.basename(filePath);
 
 					if (filePath.endsWith(".ts")) {
+						console.log(importer);
+
 						await Promise.all((await fs.readdir(cacheDirectory)).map(function(path) {
 							return new Promise<void>(async function(resolve, reject) {
 								await fs.rm(path, { "recursive": true, "force": true });
@@ -88,7 +82,7 @@ const importMetaUrlPlugin = {
 							"esbuildPlugins": [
 								// These plugins don't appear to be order-sensitive.
 								polyfillNode(Object.fromEntries(["buffer", "crypto", "events", "os", "net", "path", "process", "stream", "util"].map(function(libName) {
-									return [libName, stdLibBrowser[libName]]
+									return [libName, stdLibBrowser[libName]];
 								}))),
 								importMetaUrlPlugin
 							],
@@ -102,14 +96,15 @@ const importMetaUrlPlugin = {
 						baseName = path.basename(baseName, extension);
 
 						filePath = path.join(cacheDirectory, baseName + ".cjs");
-						baseName = baseName + ".js";
+						baseName += ".js";
 					}
 
 					// TODO: Improve
 					if (!existsSync(filePath)) {
 						const fallbackPaths = [
-							path.join(__dirname, "monaco-vscode-api", "demo", "node_modules", match),
-							path.join(__dirname, "monaco-vscode-api", "demo", "node_modules", "vscode", match)
+							path.join(__dirname, "demo", "node_modules", match),
+							path.join(__dirname, "demo", "node_modules", match + ".js"),
+							path.join(__dirname, "demo", "node_modules", "vscode", match)
 						];
 
 						for (const fallbackPath of fallbackPaths) {
@@ -188,82 +183,43 @@ if (existsSync(chunksDirectory)) {
 
 await fs.mkdir(chunksDirectory, { "recursive": true });
 
-async function manualChunks(chunkAliases: { [chunkAlias: string]: string[] }) {
-	return Object.fromEntries(await Promise.all(
-		Object.entries(chunkAliases).map(async function([chunkAlias, modules]) {
-			if (!existsSync(path.join(chunksDirectory, chunkAlias + ".ts"))) {
-				const dependencies = [...new Set((await Promise.all(modules.map(async function(module) {
-					let modulePath;
+async function manualChunks(chunkAliases: Record<string, string[]>) {
+	return Object.fromEntries(await Promise.all(Object.entries(chunkAliases).map(async function([chunkAlias, modules]) {
+		if (!existsSync(path.join(chunksDirectory, chunkAlias + ".ts"))) {
+			const dependencies = [...new Set((await Promise.all(modules.map(async function(module) {
+				let modulePath;
 
-					try {
-						modulePath = url.fileURLToPath(resolve(module, import.meta.url));
-					} catch (error) {
-						modulePath = path.join(__dirname, "node_modules", module);
+				try {
+					modulePath = url.fileURLToPath(resolve(module, import.meta.url));
+				} catch (error) {
+					modulePath = path.join(__dirname, "node_modules", module);
 
-						if (!existsSync(modulePath)) {
-							return [];
-						}
+					if (!existsSync(modulePath)) {
+						return [];
 					}
+				}
 
-					const packageJsonPath = await findParentPackageJson(modulePath);
+				const packageJsonPath = await findParentPackageJson(modulePath);
 
-					const packageJson = await fs.readFile(packageJsonPath, { "encoding": "utf8" });
+				const packageJson = await fs.readFile(packageJsonPath, { "encoding": "utf8" });
 
-					return (await Promise.all(Object.keys(JSON.parse(packageJson).dependencies ?? {}).map(function(module) {
-						return new Promise(function(resolve, reject) {
-							resolve(path.join(path.dirname(packageJsonPath), "node_modules", module));
-						});
-					}))).filter(function(element) {
-						return existsSync(element);
+				return (await Promise.all(Object.keys(JSON.parse(packageJson).dependencies ?? {}).map(function(module) {
+					return new Promise(function(resolve, reject) {
+						resolve(path.join(path.dirname(packageJsonPath), "node_modules", module));
 					});
-				}))).flat(Infinity))];
-
-				await fs.writeFile(path.join(chunksDirectory, chunkAlias + ".ts"), dependencies.map(function(module) {
-					return "import \"../" + path.relative(__dirname, module).replace(/\\/gu, "/") + "\";\n";
-				}));
-			}
-
-			return [chunkAlias, path.join("chunks", chunkAlias + ".ts")];
-		})
-	));
-}
-
-// Workers
-
-const workers = {};
-
-await tsup({
-	"config": false,
-	"entry": ["main.ts"],
-	"esbuildPlugins": [
-		{
-			"name": "enumerate-workers",
-			"setup": function(build) {
-				build.onLoad({ "filter": /worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, async function({ "path": workerPath }) {
-					workerPath = path.relative(__dirname, workerPath).split("?")[0].replace(/\\/gu, "/");
-
-					const workerChunkPath = path.join(chunksDirectory, path.basename(workerPath, path.extname(workerPath)));
-
-					workers[path.basename(workerChunkPath)] = [workerChunkPath + ".js"];
-
-					//entry[path.basename(workerChunkPath)] = workerPath; //[workerChunkPath + ".js"];
-
-					await fs.writeFile(workerChunkPath + ".ts", "import \"../" + workerPath + "\";\n");
-
-					return {
-						"contents": `
-							export default function noop() {
-								return;
-							}
-						`,
-						"loader": "js"
-					};
+				}))).filter(function(element) {
+					return existsSync(element);
 				});
-			}
+			}))).flat(Infinity))];
+
+			await fs.writeFile(path.join(chunksDirectory, chunkAlias + ".ts"), dependencies.map(function(module) {
+				return "import \"../" + path.relative(__dirname, module).replace(/\\/gu, "/") + "\";\n";
+			}));
 		}
-	],
-	"write": false
-});
+
+		return [chunkAlias, path.join("chunks", chunkAlias + ".ts")];
+	})));
+}
 
 await Promise.all([distDirectory, cacheDirectory].map(function(directory) {
 	return new Promise<void>(async function(resolve, reject) {
@@ -288,44 +244,19 @@ await Promise.all([cacheDirectory, assetsDirectory].map(function(directory) {
 const entry = {
 	"main": "main.ts",
 	...await manualChunks({
-		"monaco": ["./monaco-vscode-api/demo/"],
-		...workers
-	})
+		"monaco": ["./demo/src/main.ts"]
+	}),
+	"extensionHost.worker": "./demo/node_modules/vscode/vscode/src/vs/workbench/api/worker/extensionHostWorker.js"
 };
 
 console.log(entry);
 
 export default defineConfig({
 	"entry": entry,
-	"esbuildOptions": esbuildOptions,
+	"esbuildOptions": esbuildOptions({
+		"nodePaths": ["./demo/node_modules/"]
+	}),
 	"esbuildPlugins": [
-		{
-			"name": "resolve-worker",
-			"setup": function(build) {
-				build.onResolve({ "filter": /worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": filePath, importer }) {
-					if (filePath.startsWith(".")) {
-						return;
-					}
-
-					const baseName = path.basename(filePath.replace(/worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u, "worker"));
-
-					return {
-						"path": path.join(__dirname, "chunks", baseName + ".ts")
-					};
-				});
-
-				build.onLoad({ "filter": /worker(?:\.jsx?|\.tsx?)?(?:\?worker)?$/u }, function({ "path": workerPath }) {
-					return {
-						"contents": `
-							export default function() {
-								return new Worker("./${path.basename(workerPath, path.extname(workerPath)) + ".js"}", { "type": "module" });
-							}
-						`,
-						"loader": "js"
-					};
-				});
-			}
-		},
 		importMetaUrlPlugin
 	],
 	"external": [

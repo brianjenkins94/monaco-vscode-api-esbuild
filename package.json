@@ -6,27 +6,13 @@
   "author": "Brian Jenkins",
   "license": "MIT",
   "scripts": {
-    "build": "tsup --format esm --treeshake --outDir dist/ && cp -r dist/* docs/",
-    "postinstall": "./checkout-monaco.sh",
+    "build": "tsup --format esm --treeshake --outDir dist/",
+    "postinstall": "./install.sh",
     "serve": "npx http-server",
-    "start": "npm run serve docs/"
+    "start": "npm run serve"
   },
   "devDependencies": {
-    "@tsconfig/node-lts": "latest",
-    "@types/node": "latest",
-    "@types/vscode": "latest",
-    "@typescript-eslint/eslint-plugin": "latest",
-    "@typescript-eslint/parser": "latest",
-    "eslint": "latest",
-    "import-meta-resolve": "latest",
-    "json5": "latest",
-    "node-stdlib-browser": "latest",
-    "ts-node": "latest",
-    "tsup": "latest",
-    "typescript": "latest",
-    "vscode-languageclient": "latest",
-    "vscode-languageserver-textdocument": "latest",
-    "vscode-languageserver": "latest"
+    "@tsconfig/node-lts": "latest"
   },
   "engines": {
     "node": ">=18.0.0",
