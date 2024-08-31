@@ -223,7 +223,7 @@ async function manualChunks(chunkAliases: Record<string, string[]>) {
 	})));
 }
 
-await Promise.all([assetsDirectory, cacheDirectory].map(function(directory) {
+await Promise.all([cacheDirectory].map(function(directory) {
 	return new Promise<void>(async function(resolve, reject) {
 		if (existsSync(directory)) {
 			await fs.rm(directory, { "recursive": true, "force": true });
@@ -233,7 +233,7 @@ await Promise.all([assetsDirectory, cacheDirectory].map(function(directory) {
 	});
 }));
 
-await Promise.all([assetsDirectory, cacheDirectory].map(function(directory) {
+await Promise.all([cacheDirectory].map(function(directory) {
 	return new Promise<void>(async function(resolve, reject) {
 		await fs.mkdir(directory, { "recursive": true });
 
