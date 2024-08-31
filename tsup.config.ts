@@ -143,10 +143,12 @@ const importMetaUrlPlugin = {
 					const extension = path.extname(baseName);
 					baseName = path.basename(baseName, extension);
 
-					baseName = baseName + "-" + hash + extension;
+					if (baseName !== "extensionHost.worker") {
+						baseName = baseName + "-" + hash + extension;
 
-					// Copy it to the assets directory
-					await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
+						// Copy it to the assets directory
+						await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
+					}
 
 					if (importer.endsWith(".ts")) {
 						return "\"./assets/" + baseName + "\"";
@@ -246,7 +248,7 @@ const entry = {
 	...await manualChunks({
 		"monaco": ["./demo/src/main.ts"]
 	}),
-	"extensionHost.worker": "./demo/node_modules/vscode/vscode/src/vs/workbench/api/worker/extensionHostWorker.js"
+	//"extensionHost.worker": "./demo/node_modules/vscode/vscode/src/vs/workbench/api/worker/extensionHostWorker.js"
 };
 
 console.log(entry);
