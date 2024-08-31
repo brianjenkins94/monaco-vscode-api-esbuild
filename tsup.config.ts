@@ -143,7 +143,9 @@ const importMetaUrlPlugin = {
 					const extension = path.extname(baseName);
 					baseName = path.basename(baseName, extension);
 
-					if (baseName !== "extensionHost.worker") {
+					if (baseName === "extensionHost.worker") {
+						baseName = baseName + extension;
+					} else {
 						baseName = baseName + "-" + hash + extension;
 
 						// Copy it to the assets directory
