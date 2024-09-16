@@ -4,7 +4,7 @@ import type { BuildOptions, Format, Options } from "tsup";
 export function esbuildOptions(overrides: BuildOptions = {}) {
 	overrides["assetNames"] ??= "assets/[name]";
 	overrides["chunkNames"] ??= "assets/[name]-[hash]";
-	overrides["entryNames"] ??= "[name]";
+	overrides["entryNames"] ??= "[dir]/[name]";
 
 	return function(options: BuildOptions, context: { "format": Format }) {
 		for (const [key, value] of Object.entries(overrides)) {

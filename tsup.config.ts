@@ -225,7 +225,7 @@ async function manualChunks(chunkAliases: Record<string, string[]>) {
 	})));
 }
 
-await Promise.all([cacheDirectory].map(function(directory) {
+await Promise.all([assetsDirectory, cacheDirectory].map(function(directory) {
 	return new Promise<void>(async function(resolve, reject) {
 		if (existsSync(directory)) {
 			await fs.rm(directory, { "recursive": true, "force": true });
@@ -235,7 +235,7 @@ await Promise.all([cacheDirectory].map(function(directory) {
 	});
 }));
 
-await Promise.all([cacheDirectory].map(function(directory) {
+await Promise.all([assetsDirectory, cacheDirectory].map(function(directory) {
 	return new Promise<void>(async function(resolve, reject) {
 		await fs.mkdir(directory, { "recursive": true });
 
@@ -250,8 +250,8 @@ const entry = {
 	...await manualChunks({
 		"monaco": ["./demo/src/main.ts"]
 	}),
-	"editor.worker": "./demo/node_modules/vscode/workers/editor.worker.js",
-	"extensionHost.worker": "./demo/node_modules/vscode/vscode/src/vs/workbench/api/worker/extensionHostWorker.js"
+	"assets/editor.worker": "./demo/node_modules/vscode/workers/editor.worker.js",
+	"assets/extensionHost.worker": "./demo/node_modules/vscode/vscode/src/vs/workbench/api/worker/extensionHostWorker.js"
 };
 
 console.log(entry);
