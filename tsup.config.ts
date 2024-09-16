@@ -250,7 +250,8 @@ const entry = {
 	...await manualChunks({
 		"monaco": ["./demo/src/main.ts"]
 	}),
-	//"extensionHost.worker": "./demo/node_modules/vscode/vscode/src/vs/workbench/api/worker/extensionHostWorker.js"
+	"editor.worker": "./demo/node_modules/vscode/workers/editor.worker.js",
+	"extensionHost.worker": "./demo/node_modules/vscode/vscode/src/vs/workbench/api/worker/extensionHostWorker.js"
 };
 
 console.log(entry);
