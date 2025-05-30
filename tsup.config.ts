@@ -217,7 +217,7 @@ async function manualChunks(chunkAliases: Record<string, string[]>) {
 			}))).flat(Infinity))];
 
 			await fs.writeFile(path.join(chunksDirectory, chunkAlias + ".ts"), dependencies.map(function(module) {
-				return "import \"../" + path.relative(__dirname, module).replace(/\\/gu, "/") + "\";\n";
+				return "import \"../" + path.relative(__dirname, module).replace(/\\/gu, "/") + (module.endsWith("-common") ? "/empty.js" : "") + "\";\n";
 			}));
 		}
 
@@ -250,8 +250,8 @@ const entry = {
 	...await manualChunks({
 		"monaco": ["./demo/src/main.ts"]
 	}),
-	"assets/editor.worker": "./demo/node_modules/vscode/workers/editor.worker.js",
-	"assets/extensionHost.worker": "./demo/node_modules/vscode/vscode/src/vs/workbench/api/worker/extensionHostWorker.js"
+	"assets/editor.worker": "./demo/node_modules/@codingame/monaco-vscode-api/workers/editor.worker.js",
+	"assets/extensionHost.worker": "./demo/node_modules/@codingame/monaco-vscode-api/vscode/src/vs/workbench/api/worker/extensionHostWorker.js"
 };
 
 console.log(entry);

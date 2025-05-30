@@ -33,6 +33,6 @@ npm pkg delete dependencies["ws"]
 
 #npm pkg set overrides["@xterm/xterm"]="5.4.0-beta.20"
 
-npm install jschardet @vscode/iconv-lite-umd vscode@npm:@codingame/monaco-vscode-api@latest monaco-editor@npm:@codingame/monaco-vscode-editor-api@latest
+npm install @codingame/monaco-vscode-api@latest vscode@npm:@codingame/monaco-vscode-extension-api@latest monaco-editor@npm:@codingame/monaco-vscode-editor-api@latest
 
 cd "$CWD"
