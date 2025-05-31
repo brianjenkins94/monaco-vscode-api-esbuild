@@ -39,7 +39,7 @@ async function replaceAsync(regex, input, callback = async (execResults: RegExpE
 const importMetaUrlPlugin = {
 	"name": "import-meta-url",
 	"setup": function(build) {
-		build.onLoad({ "filter": /.*/u }, async function({ "path": importer }) {
+		build.onLoad({ "filter": /.*/ }, async function({ "path": importer }) {
 			const contents = await fs.readFile(importer, { "encoding": "utf8" });
 
 			const workerRegEx = /worker(?:\.jsx?|\.tsx?)?(?:\?worker)?/u;
@@ -49,7 +49,7 @@ const importMetaUrlPlugin = {
 			}
 		});
 
-		build.onLoad({ "filter": /.*/u }, async function({ "path": importer }) {
+		build.onLoad({ "filter": /.*/ }, async function({ "path": importer }) {
 			let contents = await fs.readFile(importer, { "encoding": "utf8" });
 
 			const newUrlRegEx = /new URL\((?:"|')(.*?)(?:"|'), \w+(?:\.\w+)*\)(?:\.\w+(?:\(\))?)?/gu;
@@ -144,12 +144,14 @@ const importMetaUrlPlugin = {
 					const extension = path.extname(baseName);
 					baseName = path.basename(baseName, extension);
 
-					if (/\.worker/u.test(baseName)) {
+					if (baseName.startsWith("worker")) {
+						baseName = baseName + "-" + hash + extension;
+
+						return "\"./workers/" + baseName + "\"";
+					} else if (/\.worker/u.test(baseName)) {
 						baseName = baseName + extension;
 
-						await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
-
-						return "\"./assets/" + baseName + "\"";
+						return "\"./workers/" + baseName + "\"";
 					} else if (importer.endsWith(".ts")) {
 						return "\"./assets/" + baseName + ".js\"";
 					}
@@ -255,12 +257,6 @@ const entry = {
 		"monaco": ["./demo/src/main.ts"]
 	}),
 	// The hope was to be able to discover and handle these automatically.
-	"assets/extensionHost.worker": "./demo/node_modules/@codingame/monaco-vscode-api/vscode/src/vs/workbench/api/worker/extensionHostWorker.js",
-	"assets/editor.worker": "./demo/node_modules/@codingame/monaco-vscode-api/workers/editor.worker.js",
-	"assets/worker-163562": "./demo/node_modules/@codingame/monaco-vscode-textmate-service-override/vscode/src/vs/workbench/services/textMate/browser/backgroundTokenization/worker/textMateTokenizationWorker.workerMain.js",
-	"assets/worker-1ce431": "./demo/node_modules/@codingame/monaco-vscode-search-service-override/vscode/src/vs/workbench/services/search/worker/localFileSearchMain.js",
-	"assets/worker-58b09b": "./demo/node_modules/@codingame/monaco-vscode-notebook-service-override/vscode/src/vs/workbench/contrib/notebook/common/services/notebookWebWorkerMain.js",
-	"assets/worker-f7ca62": "./demo/node_modules/@codingame/monaco-vscode-output-service-override/vscode/src/vs/workbench/contrib/output/common/outputLinkComputerMain.js",
 	"workers/extensionHost.worker": "./demo/node_modules/@codingame/monaco-vscode-api/vscode/src/vs/workbench/api/worker/extensionHostWorker.js",
 	"workers/editor.worker": "./demo/node_modules/@codingame/monaco-vscode-api/workers/editor.worker.js",
 	"workers/worker-163562": "./demo/node_modules/@codingame/monaco-vscode-textmate-service-override/vscode/src/vs/workbench/services/textMate/browser/backgroundTokenization/worker/textMateTokenizationWorker.workerMain.js",
@@ -290,5 +286,12 @@ export default defineConfig({
 		".tmLanguage": "dataurl",
 		".wasm": "copy"
 	},
+	"onSuccess": async function() {
+		await fs.writeFile(path.join(workersDirectory, "extensionHost.worker.js"),
+			(await fs.readFile(path.join(workersDirectory, "extensionHost.worker.js"), { "encoding": "utf8" }))
+				.replace(/export \{ create \};(?=\n$)/u, "const data = create();\nself.onmessage = (e) => data.onmessage(e.data);")
+		);
+	},
 	"treeshake": true
 });
+
