@@ -263,7 +263,6 @@ const entry = {
 	"workers/worker-1ce431": "./demo/node_modules/@codingame/monaco-vscode-search-service-override/vscode/src/vs/workbench/services/search/worker/localFileSearchMain.js",
 	"workers/worker-58b09b": "./demo/node_modules/@codingame/monaco-vscode-notebook-service-override/vscode/src/vs/workbench/contrib/notebook/common/services/notebookWebWorkerMain.js",
 	"workers/worker-f7ca62": "./demo/node_modules/@codingame/monaco-vscode-output-service-override/vscode/src/vs/workbench/contrib/output/common/outputLinkComputerMain.js"
-
 };
 
 console.log(entry);
