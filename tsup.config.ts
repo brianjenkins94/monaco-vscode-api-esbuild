@@ -13,6 +13,7 @@ import { esbuildOptions, tsup } from "./util/esbuild";
 const cacheDirectory = path.join(__dirname, ".cache");
 const distDirectory = path.join(__dirname, "docs");
 const assetsDirectory = path.join(distDirectory, "assets");
+const workersDirectory = path.join(distDirectory, "workers");
 
 // Handle `new URL("./path/to/asset", import.meta.url)`
 
@@ -147,10 +148,10 @@ const importMetaUrlPlugin = {
 						baseName = baseName + extension;
 					} else {
 						baseName = baseName + "-" + hash + extension;
-
-						// Copy it to the assets directory
-						await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 					}
+
+					// Copy it to the assets directory
+					await fs.copyFile(filePath, path.join(/^\.?worker/ui.test(baseName) ? workersDirectory : assetsDirectory, baseName));
 
 					if (importer.endsWith(".ts")) {
 						return "\"./assets/" + baseName + "\"";
@@ -217,6 +218,7 @@ async function manualChunks(chunkAliases: Record<string, string[]>) {
 			}))).flat(Infinity))];
 
 			await fs.writeFile(path.join(chunksDirectory, chunkAlias + ".ts"), dependencies.map(function(module) {
+				// HACK: Remove this when possible: (module.endsWith("-common") ? "/empty.js" : "")
 				return "import \"../" + path.relative(__dirname, module).replace(/\\/gu, "/") + (module.endsWith("-common") ? "/empty.js" : "") + "\";\n";
 			}));
 		}
@@ -225,7 +227,7 @@ async function manualChunks(chunkAliases: Record<string, string[]>) {
 	})));
 }
 
-await Promise.all([assetsDirectory, cacheDirectory].map(function(directory) {
+await Promise.all([assetsDirectory, cacheDirectory, workersDirectory].map(function(directory) {
 	return new Promise<void>(async function(resolve, reject) {
 		if (existsSync(directory)) {
 			await fs.rm(directory, { "recursive": true, "force": true });
@@ -235,7 +237,7 @@ await Promise.all([assetsDirectory, cacheDirectory].map(function(directory) {
 	});
 }));
 
-await Promise.all([assetsDirectory, cacheDirectory].map(function(directory) {
+await Promise.all([assetsDirectory, cacheDirectory, workersDirectory].map(function(directory) {
 	return new Promise<void>(async function(resolve, reject) {
 		await fs.mkdir(directory, { "recursive": true });
 
@@ -250,8 +252,13 @@ const entry = {
 	...await manualChunks({
 		"monaco": ["./demo/src/main.ts"]
 	}),
-	"assets/editor.worker": "./demo/node_modules/@codingame/monaco-vscode-api/workers/editor.worker.js",
-	"assets/extensionHost.worker": "./demo/node_modules/@codingame/monaco-vscode-api/vscode/src/vs/workbench/api/worker/extensionHostWorker.js"
+	// The hope was to be able to discover and handle these automatically.
+	"workers/editor.worker": "./demo/node_modules/@codingame/monaco-vscode-api/workers/editor.worker.js",
+	"workers/extensionHost.worker": "./demo/node_modules/@codingame/monaco-vscode-api/vscode/src/vs/workbench/api/worker/extensionHostWorker.js",
+	"workers/worker-163562": "./demo/node_modules/@codingame/monaco-vscode-textmate-service-override/vscode/src/vs/workbench/services/textMate/browser/backgroundTokenization/worker/textMateTokenizationWorker.workerMain.js",
+	"workers/worker-1ce431": "./demo/node_modules/@codingame/monaco-vscode-search-service-override/vscode/src/vs/workbench/services/search/worker/localFileSearchMain.js",
+	"workers/worker-58b09b": "./demo/node_modules/@codingame/monaco-vscode-notebook-service-override/vscode/src/vs/workbench/contrib/notebook/common/services/notebookWebWorkerMain.js",
+	"workers/worker-f7ca62": "./demo/node_modules/@codingame/monaco-vscode-output-service-override/vscode/src/vs/workbench/contrib/output/common/outputLinkComputerMain.js"
 };
 
 console.log(entry);
