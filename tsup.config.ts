@@ -146,16 +146,24 @@ const importMetaUrlPlugin = {
 
 					if (baseName === "extensionHost.worker") {
 						baseName = baseName + extension;
-					} else {
-						baseName = baseName + "-" + hash + extension;
+
+						await fs.copyFile(filePath, path.join(workersDirectory, baseName));
+
+						return "\"./workers/" + baseName + "\"";
 					}
 
-					// Copy it to the assets directory
-					await fs.copyFile(filePath, path.join(/^\.?worker/ui.test(baseName) ? workersDirectory : assetsDirectory, baseName));
+					if (/^(worker)|(\.worker)/u.test(baseName)) {
+						await fs.copyFile(filePath, path.join(workersDirectory, baseName));
 
-					if (importer.endsWith(".ts")) {
+						return "\"./workers/" + baseName + extension + "\"";
+					} else if (importer.endsWith(".ts")) {
 						return "\"./assets/" + baseName + "\"";
 					}
+
+					baseName = baseName + "-" + hash + extension;
+
+					// Copy it to the assets directory
+					await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 
 					// So that we can refer to it by its unique name.
 					return "\"./" + baseName + "\"";
@@ -253,8 +261,8 @@ const entry = {
 		"monaco": ["./demo/src/main.ts"]
 	}),
 	// The hope was to be able to discover and handle these automatically.
-	"workers/editor.worker": "./demo/node_modules/@codingame/monaco-vscode-api/workers/editor.worker.js",
 	"workers/extensionHost.worker": "./demo/node_modules/@codingame/monaco-vscode-api/vscode/src/vs/workbench/api/worker/extensionHostWorker.js",
+	"workers/editor.worker": "./demo/node_modules/@codingame/monaco-vscode-api/workers/editor.worker.js",
 	"workers/worker-163562": "./demo/node_modules/@codingame/monaco-vscode-textmate-service-override/vscode/src/vs/workbench/services/textMate/browser/backgroundTokenization/worker/textMateTokenizationWorker.workerMain.js",
 	"workers/worker-1ce431": "./demo/node_modules/@codingame/monaco-vscode-search-service-override/vscode/src/vs/workbench/services/search/worker/localFileSearchMain.js",
 	"workers/worker-58b09b": "./demo/node_modules/@codingame/monaco-vscode-notebook-service-override/vscode/src/vs/workbench/contrib/notebook/common/services/notebookWebWorkerMain.js",
