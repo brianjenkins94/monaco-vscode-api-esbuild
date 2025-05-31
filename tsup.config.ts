@@ -144,20 +144,14 @@ const importMetaUrlPlugin = {
 					const extension = path.extname(baseName);
 					baseName = path.basename(baseName, extension);
 
-					if (baseName === "extensionHost.worker") {
+					if (/\.worker/u.test(baseName)) {
 						baseName = baseName + extension;
 
-						await fs.copyFile(filePath, path.join(workersDirectory, baseName));
+						await fs.copyFile(filePath, path.join(assetsDirectory, baseName));
 
-						return "\"./workers/" + baseName + "\"";
-					}
-
-					if (/^(worker)|(\.worker)/u.test(baseName)) {
-						await fs.copyFile(filePath, path.join(workersDirectory, baseName));
-
-						return "\"./workers/" + baseName + extension + "\"";
-					} else if (importer.endsWith(".ts")) {
 						return "\"./assets/" + baseName + "\"";
+					} else if (importer.endsWith(".ts")) {
+						return "\"./assets/" + baseName + ".js\"";
 					}
 
 					baseName = baseName + "-" + hash + extension;
@@ -261,12 +255,19 @@ const entry = {
 		"monaco": ["./demo/src/main.ts"]
 	}),
 	// The hope was to be able to discover and handle these automatically.
+	"assets/extensionHost.worker": "./demo/node_modules/@codingame/monaco-vscode-api/vscode/src/vs/workbench/api/worker/extensionHostWorker.js",
+	"assets/editor.worker": "./demo/node_modules/@codingame/monaco-vscode-api/workers/editor.worker.js",
+	"assets/worker-163562": "./demo/node_modules/@codingame/monaco-vscode-textmate-service-override/vscode/src/vs/workbench/services/textMate/browser/backgroundTokenization/worker/textMateTokenizationWorker.workerMain.js",
+	"assets/worker-1ce431": "./demo/node_modules/@codingame/monaco-vscode-search-service-override/vscode/src/vs/workbench/services/search/worker/localFileSearchMain.js",
+	"assets/worker-58b09b": "./demo/node_modules/@codingame/monaco-vscode-notebook-service-override/vscode/src/vs/workbench/contrib/notebook/common/services/notebookWebWorkerMain.js",
+	"assets/worker-f7ca62": "./demo/node_modules/@codingame/monaco-vscode-output-service-override/vscode/src/vs/workbench/contrib/output/common/outputLinkComputerMain.js",
 	"workers/extensionHost.worker": "./demo/node_modules/@codingame/monaco-vscode-api/vscode/src/vs/workbench/api/worker/extensionHostWorker.js",
 	"workers/editor.worker": "./demo/node_modules/@codingame/monaco-vscode-api/workers/editor.worker.js",
 	"workers/worker-163562": "./demo/node_modules/@codingame/monaco-vscode-textmate-service-override/vscode/src/vs/workbench/services/textMate/browser/backgroundTokenization/worker/textMateTokenizationWorker.workerMain.js",
 	"workers/worker-1ce431": "./demo/node_modules/@codingame/monaco-vscode-search-service-override/vscode/src/vs/workbench/services/search/worker/localFileSearchMain.js",
 	"workers/worker-58b09b": "./demo/node_modules/@codingame/monaco-vscode-notebook-service-override/vscode/src/vs/workbench/contrib/notebook/common/services/notebookWebWorkerMain.js",
 	"workers/worker-f7ca62": "./demo/node_modules/@codingame/monaco-vscode-output-service-override/vscode/src/vs/workbench/contrib/output/common/outputLinkComputerMain.js"
+
 };
 
 console.log(entry);

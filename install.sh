@@ -4,15 +4,15 @@ CWD=$(pwd)
 
 rm -rf demo/ monaco-vscode-api/
 
-if [[ "$(uname -s)" == MINGW* ]]; then
-	git clone https://github.com/CodinGame/monaco-vscode-api.git
-else
-	git clone --no-checkout --depth 1 --filter=tree:0 --sparse https://github.com/CodinGame/monaco-vscode-api.git
-	cd monaco-vscode-api/
-	git sparse-checkout set --no-cone "!/*" "/demo"
-	git checkout
-    cd ..
-fi
+git clone --no-checkout --depth 1 --filter=tree:0 --sparse https://github.com/CodinGame/monaco-vscode-api.git
+
+cd monaco-vscode-api/
+
+git sparse-checkout set demo/
+
+git checkout
+
+cd ..
 
 cp -rf monaco-vscode-api/demo/ demo/
 
