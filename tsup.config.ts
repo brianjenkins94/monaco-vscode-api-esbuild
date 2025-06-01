@@ -257,7 +257,7 @@ const entry = {
 		"monaco": ["./demo/src/main.ts"]
 	}),
 	// The hope was to be able to discover and handle these automatically.
-	"workers/extensionHost.worker": "./demo/node_modules/@codingame/monaco-vscode-api/vscode/src/vs/workbench/api/worker/extensionHostWorker.js",
+	"workers/extensionHost.worker": "./demo/node_modules/@codingame/monaco-vscode-api/vscode/src/vs/workbench/api/worker/extensionHostWorkerMain.js",
 	"workers/editor.worker": "./demo/node_modules/@codingame/monaco-vscode-api/workers/editor.worker.js",
 	"workers/worker-163562": "./demo/node_modules/@codingame/monaco-vscode-textmate-service-override/vscode/src/vs/workbench/services/textMate/browser/backgroundTokenization/worker/textMateTokenizationWorker.workerMain.js",
 	"workers/worker-1ce431": "./demo/node_modules/@codingame/monaco-vscode-search-service-override/vscode/src/vs/workbench/services/search/worker/localFileSearchMain.js",
@@ -284,12 +284,6 @@ export default defineConfig({
 		".svg": "dataurl",
 		".tmLanguage": "dataurl",
 		".wasm": "copy"
-	},
-	"onSuccess": async function() {
-		await fs.writeFile(path.join(workersDirectory, "extensionHost.worker.js"),
-			(await fs.readFile(path.join(workersDirectory, "extensionHost.worker.js"), { "encoding": "utf8" }))
-				.replace(/export \{ create \};(?=\n$)/u, "const data = create();\nself.onmessage = (e) => data.onmessage(e.data);")
-		);
 	},
 	"treeshake": true
 });
