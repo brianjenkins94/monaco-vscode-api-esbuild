@@ -4,7 +4,7 @@ import { LanguageClient } from "vscode-languageclient/browser";
 
 function createWorkerLanguageClient(context: vscode.ExtensionContext, clientOptions: LanguageClientOptions) {
 	// Create a worker. The worker main file implements the language server.
-	const serverMain = new URL("./server.ts", import.meta.url).toString(); //vscode.Uri.joinPath(context.extensionUri, 'server.js');
+	const serverMain = vscode.Uri.joinPath(context.extensionUri, 'server.js');
 	const worker = new Worker(serverMain.toString());
 
 	// create the language server client to communicate with the server running in the worker

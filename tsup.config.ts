@@ -13,6 +13,7 @@ import { esbuildOptions, tsup } from "./util/esbuild";
 const cacheDirectory = path.join(__dirname, ".cache");
 const distDirectory = path.join(__dirname, "docs");
 const assetsDirectory = path.join(distDirectory, "assets");
+const extensionsDirectory = path.join(distDirectory, "extensions");
 const workersDirectory = path.join(distDirectory, "workers");
 
 // Handle `new URL("./path/to/asset", import.meta.url)`
@@ -40,16 +41,6 @@ const importMetaUrlPlugin = {
 	"name": "import-meta-url",
 	"setup": function(build) {
 		build.onLoad({ "filter": /.*/ }, async function({ "path": importer }) {
-			const contents = await fs.readFile(importer, { "encoding": "utf8" });
-
-			const workerRegEx = /worker(?:\.jsx?|\.tsx?)?(?:\?worker)?/u;
-
-			if (workerRegEx.test(contents)) {
-				console.log(importer);
-			}
-		});
-
-		build.onLoad({ "filter": /.*/ }, async function({ "path": importer }) {
 			let contents = await fs.readFile(importer, { "encoding": "utf8" });
 
 			const newUrlRegEx = /new URL\((?:"|')(.*?)(?:"|'), \w+(?:\.\w+)*\)(?:\.\w+(?:\(\))?)?/gu;
@@ -61,7 +52,7 @@ const importMetaUrlPlugin = {
 					let baseName = path.basename(filePath);
 
 					if (filePath.endsWith(".ts")) {
-						console.log(importer);
+						console.log(filePath);
 
 						await Promise.all((await fs.readdir(cacheDirectory)).map(function(path) {
 							return new Promise<void>(async function(resolve, reject) {
@@ -98,6 +89,10 @@ const importMetaUrlPlugin = {
 
 						filePath = path.join(cacheDirectory, baseName + ".cjs");
 						baseName += ".js";
+
+						await fs.copyFile(filePath, path.join(extensionsDirectory, baseName));
+
+						return "\"./extensions/" + baseName + "\"";
 					}
 
 					// TODO: Improve
@@ -152,8 +147,6 @@ const importMetaUrlPlugin = {
 						baseName = baseName + extension;
 
 						return "\"./workers/" + baseName + "\"";
-					} else if (importer.endsWith(".ts")) {
-						return "\"./assets/" + baseName + ".js\"";
 					}
 
 					baseName = baseName + "-" + hash + extension;
@@ -231,7 +224,7 @@ async function manualChunks(chunkAliases: Record<string, string[]>) {
 	})));
 }
 
-await Promise.all([assetsDirectory, cacheDirectory, workersDirectory].map(function(directory) {
+await Promise.all([assetsDirectory, cacheDirectory, extensionsDirectory, workersDirectory].map(function(directory) {
 	return new Promise<void>(async function(resolve, reject) {
 		if (existsSync(directory)) {
 			await fs.rm(directory, { "recursive": true, "force": true });
@@ -241,7 +234,7 @@ await Promise.all([assetsDirectory, cacheDirectory, workersDirectory].map(functi
 	});
 }));
 
-await Promise.all([assetsDirectory, cacheDirectory, workersDirectory].map(function(directory) {
+await Promise.all([assetsDirectory, cacheDirectory, extensionsDirectory, workersDirectory].map(function(directory) {
 	return new Promise<void>(async function(resolve, reject) {
 		await fs.mkdir(directory, { "recursive": true });
 

@@ -18,7 +18,10 @@
     "json5": "latest",
     "node-stdlib-browser": "latest",
     "tsup": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "vscode-languageclient": "latest",
+    "vscode-languageserver": "latest",
+    "vscode-languageserver-textdocument": "latest"
   },
   "engines": {
     "node": ">=18.0.0",
