@@ -71,11 +71,43 @@ const importMetaUrlPlugin = {
 							"define": {
 								"Buffer": "Buffer"
 							},
+							"esbuildOptions": esbuildOptions({
+								"nodePaths": ["./demo/node_modules/"]
+							}),
 							"esbuildPlugins": [
-								// These plugins don't appear to be order-sensitive.
-								polyfillNode(Object.fromEntries(["buffer", "crypto", "events", "os", "net", "path", "process", "stream", "util"].map(function(libName) {
-									return [libName, stdLibBrowser[libName]];
-								}))),
+								{
+									"name": "node-stdlib-browser-alias",
+									"setup": function(build) {
+										const builtinsMap = Object.fromEntries(Object.keys(stdLibBrowser).map(function(libName) {
+											return [libName, stdLibBrowser[libName]];
+										}))
+
+										const filter = new RegExp(`^(${["buffer", "crypto", "events", "os", "net", "path", "process", "stream", "util"].join("|")})(/.*)?$`)
+
+										build.onResolve({ "filter": filter }, function(args) {
+											if (Object.keys(builtinsMap).some((builtin) => args.path.startsWith(builtin))) {
+												return {
+													"path": args.path,
+													"namespace": "external-global",
+													"pluginData": args
+												};
+											}
+										});
+
+										build.onLoad({ "filter": /.*/, "namespace": "external-global" }, async function({ "pluginData": { importer }, ...args }) {
+											//const [match] = new RegExp(`(?<=^import ).+?(?= from (?:"|')${args["path"]}(?:"|');?$)`, "mu").exec(await fs.readFile(importer)) || [];
+
+											const matches = Object.entries(await import(args["path"])).map(function([key, value]) {
+												return `export ${key === "default" ? "default" : `const ${key} =`} ${(typeof value === "function" ? "() => {}" : undefined)};`;
+											}).join("\n");
+
+											return {
+												"contents": matches,
+												"loader": "js"
+											};
+										});
+									}
+								},
 								importMetaUrlPlugin
 							],
 							"external": ["vscode"], //[/^vscode.*/u],

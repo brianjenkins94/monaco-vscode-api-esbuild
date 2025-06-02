@@ -1,0 +1,25 @@
+{
+	"name": "humanify",
+	"displayName": "humanify",
+	"description": "",
+	"version": "1.0.0",
+	"publisher": "vscode-samples",
+	"engines": {
+		"vscode": "^1.84.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onCommand:renameableSymbols.list"
+	],
+	"browser": "./extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "renameableSymbols.list",
+				"title": "List Renameable Symbols"
+			}
+		]
+	}
+}

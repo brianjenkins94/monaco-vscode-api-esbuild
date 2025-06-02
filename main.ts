@@ -238,14 +238,40 @@ h1 {
 
 	fileSystemProvider.registerFile(
 		new RegisteredMemoryFile(
-			monaco.Uri.file('/workspace/.vscode/extensions.json'),
-			JSON.stringify(
-				{
-					recommendations: ['vscodevim.vim']
-				},
-				null,
-				2
-			)
+			monaco.Uri.file('/workspace/tsconfig.json'),
+			`{
+				"compilerOptions": {
+					"esModuleInterop": true,
+					"skipLibCheck": true,
+					"alwaysStrict": true,
+					//"exactOptionalPropertyTypes": true,
+					"forceConsistentCasingInFileNames": false,
+					"isolatedModules": true,
+					"jsx": "react-jsx",
+					"lib": [
+						"dom",
+						"dom.iterable",
+						"esnext"
+					],
+					"module": "ESNext",
+					"moduleResolution": "Node",
+					"noEmit": true,
+					//"noImplicitAny": true,
+					"noImplicitOverride": true,
+					"noImplicitReturns": true,
+					//"noImplicitThis": true,
+					"noPropertyAccessFromIndexSignature": true,
+					"resolveJsonModule": true,
+					"strict": false,
+					"strictBindCallApply": true,
+					"strictFunctionTypes": true,
+					//"strictNullChecks": true,
+					//"strictPropertyInitialization": true,
+					//"useUnknownInCatchVariables": true
+					"target": "ESNext",
+					"experimentalDecorators": true
+				}
+			}`
 		)
 	)
 
@@ -586,57 +612,60 @@ await registerExtension(
 
 import '@codingame/monaco-vscode-clojure-default-extension'
 import '@codingame/monaco-vscode-coffeescript-default-extension'
+import '@codingame/monaco-vscode-configuration-editing-default-extension'
 import '@codingame/monaco-vscode-cpp-default-extension'
 import '@codingame/monaco-vscode-csharp-default-extension'
 import '@codingame/monaco-vscode-css-default-extension'
+import '@codingame/monaco-vscode-css-language-features-default-extension'
 import '@codingame/monaco-vscode-diff-default-extension'
+import '@codingame/monaco-vscode-emmet-default-extension'
 import '@codingame/monaco-vscode-fsharp-default-extension'
 import '@codingame/monaco-vscode-go-default-extension'
 import '@codingame/monaco-vscode-groovy-default-extension'
 import '@codingame/monaco-vscode-html-default-extension'
+import '@codingame/monaco-vscode-html-language-features-default-extension'
+import '@codingame/monaco-vscode-ipynb-default-extension'
 import '@codingame/monaco-vscode-java-default-extension'
 import '@codingame/monaco-vscode-javascript-default-extension'
 import '@codingame/monaco-vscode-json-default-extension'
+import '@codingame/monaco-vscode-json-language-features-default-extension'
 import '@codingame/monaco-vscode-julia-default-extension'
 import '@codingame/monaco-vscode-lua-default-extension'
 import '@codingame/monaco-vscode-markdown-basics-default-extension'
+import '@codingame/monaco-vscode-markdown-language-features-default-extension'
+import '@codingame/monaco-vscode-markdown-math-default-extension'
+import '@codingame/monaco-vscode-media-preview-default-extension'
+import '@codingame/monaco-vscode-npm-default-extension'
 import '@codingame/monaco-vscode-objective-c-default-extension'
 import '@codingame/monaco-vscode-perl-default-extension'
 import '@codingame/monaco-vscode-php-default-extension'
 import '@codingame/monaco-vscode-powershell-default-extension'
 import '@codingame/monaco-vscode-python-default-extension'
 import '@codingame/monaco-vscode-r-default-extension'
+import '@codingame/monaco-vscode-references-view-default-extension'
 import '@codingame/monaco-vscode-ruby-default-extension'
 import '@codingame/monaco-vscode-rust-default-extension'
 import '@codingame/monaco-vscode-scss-default-extension'
+import '@codingame/monaco-vscode-search-result-default-extension'
 import '@codingame/monaco-vscode-shellscript-default-extension'
 import '@codingame/monaco-vscode-sql-default-extension'
 import '@codingame/monaco-vscode-swift-default-extension'
+import '@codingame/monaco-vscode-theme-defaults-default-extension'
+import '@codingame/monaco-vscode-theme-seti-default-extension'
 import '@codingame/monaco-vscode-typescript-basics-default-extension'
+import '@codingame/monaco-vscode-typescript-language-features-default-extension'
 import '@codingame/monaco-vscode-vb-default-extension'
 import '@codingame/monaco-vscode-xml-default-extension'
 import '@codingame/monaco-vscode-yaml-default-extension'
-import '@codingame/monaco-vscode-theme-defaults-default-extension'
-import '@codingame/monaco-vscode-theme-seti-default-extension'
-import '@codingame/monaco-vscode-references-view-default-extension'
-import '@codingame/monaco-vscode-search-result-default-extension'
-import '@codingame/monaco-vscode-configuration-editing-default-extension'
-import '@codingame/monaco-vscode-markdown-math-default-extension'
-import '@codingame/monaco-vscode-npm-default-extension'
-import '@codingame/monaco-vscode-media-preview-default-extension'
-import '@codingame/monaco-vscode-ipynb-default-extension'
 
 export { ExtensionHostKind, registerExtension };
 
 const { registerFileUrl, getApi } = registerExtension({
-	"name": "helloworld-web-sample",
-	"displayName": "helloworld-web-sample",
-	"description": "HelloWorld example for VS Code in the browser",
-	"version": "0.0.1",
+	"name": "humanify",
+	"displayName": "humanify",
+	"description": "",
+	"version": "1.0.0",
 	"publisher": "vscode-samples",
-	"private": true,
-	"license": "MIT",
-	"repository": "https://github.com/microsoft/vscode-extension-samples/helloworld-web-sample",
 	"engines": {
 		"vscode": "^1.84.0"
 	},
@@ -644,39 +673,18 @@ const { registerFileUrl, getApi } = registerExtension({
 		"Other"
 	],
 	"activationEvents": [
-		"onLanguage:plaintext"
+		"onCommand:renameableSymbols.list"
 	],
 	"browser": "./extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "helloworld-web-sample.helloWorld",
-				"title": "Hello World"
-			}
-		],
-		"configuration": [
-			{
-				"order": 22,
-				"id": "lsp-web-extension-sample",
-				"title": "lsp-web-extension-sample",
-				"properties": {
-					"lsp-web-extension-sample.trace.server": {
-						"type": "string",
-						"scope": "window",
-						"enum": [
-							"off",
-							"messages",
-							"verbose"
-						],
-						"default": "verbose",
-						"description": "Traces the communication between VS Code and the lsp-web-extension-sample language server."
-					}
-				}
+				"command": "renameableSymbols.list",
+				"title": "List Renameable Symbols"
 			}
 		]
 	}
 }, ExtensionHostKind.LocalWebWorker);
 
-registerFileUrl('/server.js', new URL('./extensions/hello-world/server.ts', import.meta.url).toString())
-registerFileUrl('/extension.js', new URL('./extensions/hello-world/extension.ts', import.meta.url).toString())
-registerFileUrl('/package.json', new URL('./extensions/hello-world/package.json', import.meta.url).toString())
+registerFileUrl('/extension.js', new URL('./extensions/humanify/extension.ts', import.meta.url).toString())
+registerFileUrl('/package.json', new URL('./extensions/humanify/package.json', import.meta.url).toString())
